@@ -43,10 +43,10 @@ def main(fov, FEKO_SOURCE_PATH, SAVE_PATH, problematic_threshold = -3,ant_start=
                 print(f"type of enorm: {type(e_norm[0])}")
                 # print(e_norm[0])
            
-                PR_container = F.detect_bad_pattern(e_norm, problematic_threshold=problematic_threshold)
+                PR_container = F.detect_bad_pattern(e_norm, problematic_threshold=problematic_threshold) # output a list(len is antenna number) of list(len is number of PR) of tuples (ϕ,θ,e_norm)
                 print(f"Detected {len(PR_container)} problematic region {problematic_threshold}")
   
-                print("____________________________________________________________________________-")
+                print("________________________________tested above ____________________________________________")
 
                 for c in range(len(PR_container)):
                     PRs = F.identify_phi_edges(PR_container[c])
