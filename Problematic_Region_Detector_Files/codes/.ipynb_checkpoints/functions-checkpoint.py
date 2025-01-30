@@ -84,7 +84,7 @@ def process_xpol(antenna_data, theta_range,ant):
 def process_ypol(antenna_data, theta_range,ant):
     """Processes data for Ypol files."""
     df_0_180 = pd.DataFrame(antenna_data[180:540, :theta_range + 1,ant])  #phi  0-179.5 degrees
-    df_180_270 = pd.DataFrame(antenna_data[540:, :theta_range + 1],ant)  # phi 180-270 degrees
+    df_180_270 = pd.DataFrame(antenna_data[540:, :theta_range + 1,ant])  # phi 180-270 degrees
     df_270_360 = pd.DataFrame(antenna_data[0:180, :theta_range + 1,ant])  # phi 270-360 degrees
     df_180_360 = pd.concat([df_180_270, df_270_360])
     return pd.concat([df_180_360, df_0_180]).reset_index(drop=True)
@@ -246,12 +246,11 @@ def identify_phi_edges(problematic_data):
     phi_edges = []
 
     for antenna in problematic_data:
-        print(f"phi, theta and power is :  {antenna}")
         if antenna:
             temp = [[antenna[0]]]  # Start a new group with the first problematic point
-            print(f"temp :  {temp}")
+            # print(f"temp :  {temp}")
             for index in range(len(antenna) - 1):
-                print(index)
+                # print(index)
                 current = antenna[index]
                 next_ = antenna[index + 1]
 
@@ -335,7 +334,7 @@ def get_minimum_power_dB(file, problematic_file):
     this is to get the minimum power of the problematic region.
     """
 
-    max_dB_list = []
+    min_dB_list = []
     for i in range(len(file)):
         phi = (file[i][0][0], file[i][1][0])
 
@@ -346,9 +345,9 @@ def get_minimum_power_dB(file, problematic_file):
             if problematic_file[k][0] in range(phi[0],phi[1]+1):
                 temp_theta.append(problematic_file[k][1])
                 temp_dbi.append (problematic_file[k][2])
-        max_dB = np.max(temp_dbi)
-        max_dB_list.append(max_dB)
-    return max_dB_list
+        min_dB = np.min(temp_dbi)
+        min_dB_list.append(min_dB)
+    return min_dB_list
 
 def transform_str_to_float(string):
     numbers = string.strip('[]').split(',')
@@ -376,17 +375,28 @@ def plot_2d_contour(filename, fov, output_path=None, enorm_path= None):
 
     for antenna in range(256):
         if filename.endswith('Xpol_enorm.mat'):
-            df=process_xpol(e_norm)
+            df=process_xpol(e_norm, theta_range,antenna)
         elif filename.endswith('Ypol_enorm.mat'):
-            df=process_ypol(e_norm)
+            df=process_ypol(e_norm, theta_range,antenna)
 
         # Plot the contour
-        plt.figure(figsize = (6.4,5))
-        levels = [min(df.values.flatten()),-9, -6, -3]
+        plt.figure(figsize = (12,5))
+        plt.subplot(121)
+        # levels = [min(df.values.flatten()),-9, -6, -3]
+        levels = sorted([min(df.values.flatten()), -9, -6, -3])
         contour_plot = plt.contourf(X, Y, df.values,levels=levels,cmap= 'coolwarm',vmin =-12)
         c = plt.contour(X, Y, df.values,levels, linestyles='dashed', colors = 'k', alpha = .8)
         plt.clabel(c, inline=True, fontsize=8, colors = 'k')
         colorbar = plt.colorbar(contour_plot, label='Normalised EEPs, dB')
+        
+        plt.subplot(122)
+        locat = np.unravel_index(np.argmax(df), df.shape)
+        plt.scatter(locat[1]/2, (locat[0] / 2)-180)
+        print((locat[0] / 2)-180,locat[1]/2 )
+        plt.imshow(df, aspect = 'auto', extent=[0,90,-180,180], alpha = 1, origin = "lower")
+        plt.colorbar()
+        
+        
 
         # Set labels and title
         title = f"Problematic regions at {freq}MHz in {pol}pol, antenna #{antenna+1}"
@@ -398,4 +408,5 @@ def plot_2d_contour(filename, fov, output_path=None, enorm_path= None):
         plt.tight_layout()
         if output_path is not None:
             plt.savefig(f"{output_path}/{freq}MHz_{pol}pol_#{antenna+1}.png", dpi=100)
+        plt.show()
         plt.close()
