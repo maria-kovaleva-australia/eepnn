@@ -10,7 +10,7 @@ def main(fov, FEKO_SOURCE_PATH, SAVE_PATH, problematic_threshold = -3,ant_start=
     start_time = time.time()
     output_path_csv = f'{SAVE_PATH}/problematic_regions.csv'
     output_path_excel=f'{SAVE_PATH}/problematic_regions.xlsx'
-    # F.cal_and_save_e_nrom(721,181,256, FEKO_SOURCE_PATH, SAVE_PATH)
+    F.cal_and_save_e_nrom(721,181,256, FEKO_SOURCE_PATH, SAVE_PATH)
     
     with open(output_path_csv, 'w') as f:
         writer = csv.writer(f)
