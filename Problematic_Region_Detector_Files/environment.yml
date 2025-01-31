@@ -1,0 +1,18 @@
+me: cuda-env
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python  # This will install the latest available Python version
+  - cudatoolkit  # Specify the CUDA version (adjust as needed)
+  - scipy
+  - pandas
+  - matplotlib
+  - seaborn
+  - numpy
+  - csv
+  - argparse
+  - pip
+  - pip:
+    - scikit-learn  # Add any other necessary packages here
+
