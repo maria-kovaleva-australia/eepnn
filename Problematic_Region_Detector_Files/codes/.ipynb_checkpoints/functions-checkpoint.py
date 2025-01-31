@@ -2,22 +2,13 @@ import os
 from scipy.io import loadmat, savemat
 import pandas as pd
 import re
-from scipy.stats import skew
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-import gc
-import seaborn as sns
 import math
 from math import asin, degrees, sqrt
-import shutil
-import zipfile
-from datetime import datetime
-import time
 import csv
-import os
-import csv
-import time
+
 
 
 def match_freq_pol(file_name):
@@ -382,25 +373,24 @@ def plot_2d_contour(filename, fov, output_path=None, enorm_path= None):
         # Plot the contour
         plt.figure(figsize = (12,5))
         plt.subplot(121)
-        # levels = [min(df.values.flatten()),-9, -6, -3]
         levels = sorted([min(df.values.flatten()), -9, -6, -3])
-        contour_plot = plt.contourf(X, Y, df.values,levels=levels,cmap= 'coolwarm',vmin =-12)
+        contour_plot = plt.contourf(X, Y, df.values,levels=levels,cmap= 'Spectral',vmin =-12)
         c = plt.contour(X, Y, df.values,levels, linestyles='dashed', colors = 'k', alpha = .8)
         plt.clabel(c, inline=True, fontsize=8, colors = 'k')
         colorbar = plt.colorbar(contour_plot, label='Normalised EEPs, dB')
         
         plt.subplot(122)
         locat = np.unravel_index(np.argmax(df), df.shape)
-        plt.scatter(locat[1]/2, (locat[0] / 2)-180)
+        plt.scatter(locat[1]/2, (locat[0] / 2)-180, c="red")
         print((locat[0] / 2)-180,locat[1]/2 )
-        plt.imshow(df, aspect = 'auto', extent=[0,90,-180,180], alpha = 1, origin = "lower")
+        plt.imshow(df, aspect = 'auto', extent=[0,90,-180,180], alpha = 1, origin = "lower", cmap= 'Spectral')
         plt.colorbar()
-        
         
 
         # Set labels and title
         title = f"Problematic regions at {freq}MHz in {pol}pol, antenna #{antenna+1}"
-        plt.title(title)
+        # plt.title(title)
+        plt.suptitle(title)
         plt.xlabel('(θ deg)')
         plt.ylabel('(φ deg)')
         # plt.ylim(-180,180)

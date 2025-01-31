@@ -1,24 +1,8 @@
 import functions as F
-import os
-from scipy.io import loadmat, savemat
 import pandas as pd
-import re
-from scipy.stats import skew
-import matplotlib.pyplot as plt
-import numpy as np
-import seaborn as sns
-import gc
-import seaborn as sns
-import math
-from math import asin, degrees, sqrt
-import shutil
-import zipfile
-from datetime import datetime
 import time
 import csv
 import os
-import csv
-import time
 import argparse
 
 
@@ -40,29 +24,28 @@ def main(fov, FEKO_SOURCE_PATH, SAVE_PATH, problematic_threshold = -3,ant_start=
                 freq, pol = F.match_freq_pol(file_)
                 e_norm = F.process_e_norm(f"{SAVE_PATH}/e_norms", file_, fov, ant_start=ant_start, ant_end=ant_end)
                 print(f"selected {len(e_norm)} EEPs")
-                print(f"type of enorm: {type(e_norm[0])}")
+                # print(f"type of enorm: {type(e_norm[0])}")
                
            
                 PR_container = F.detect_bad_pattern(e_norm, problematic_threshold=problematic_threshold) # output a list(len is antenna number) of list(len is number of PR) of tuples (ϕ,θ,e_norm)
-                print(f"Detected {len(PR_container)} problematic region {problematic_threshold}")
+                # print(f"Detected {len(PR_container)} problematic region {problematic_threshold}")
   
-                print("________________________________tested above ____________________________________________")
+                # print("________________________________tested above ____________________________________________")
     
                 # for c in range(len(PR_container)):
                 PRs = F.identify_phi_edges(PR_container)
                 for antenna in range(len(PRs)):
                     ant_num = antenna+ant_start
-                    print(f"ant_num: {ant_num}")
-                    
-                    print(f"testing F.calculate_phi_theta_ranges....")
+                    # print(f"ant_num: {ant_num}")
+                    # print(f"testing F.calculate_phi_theta_ranges....")
                     boxes = F.calculate_phi_theta_ranges(PRs[antenna], PR_container[antenna])
                     
-                    print(f"testing F.get_minimum_power_dB....")
+                    # print(f"testing F.get_minimum_power_dB....")
                     lowest_dB_list = F.get_minimum_power_dB(PRs[antenna], PR_container[antenna])
                     ant_max_power = e_norm[antenna].max().max()
                     
-                    print(f"printing e_norm for antenna: {antenna}, type: {type(e_norm[antenna])}")
-                    print( e_norm[antenna])
+                    # print(f"printing e_norm for antenna: {antenna}, type: {type(e_norm[antenna])}")
+                    # print( e_norm[antenna])
                     p, t= divmod(e_norm[antenna].values.argmax(), e_norm[antenna].shape[1])
                     location_max_power_phi = (p / 2) - 180
                     location_max_power_the = t/2
