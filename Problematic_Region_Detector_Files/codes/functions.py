@@ -58,7 +58,7 @@ def cal_and_save_e_nrom(dim1, dim2, dim3, source_files, save_path,starstwith='FE
 
             savemat(save_to, {'e_norm': e_norm})
             enorm_list.append(e_norm)
-            print(f'saved {save_to}')
+            print(f'saved e_norm to {save_to}')
             # os.remove(f'{source_files}/{file}')
         except ValueError as err:
             print(f'{err} at {file}')
