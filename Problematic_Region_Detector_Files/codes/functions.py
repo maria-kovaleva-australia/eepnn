@@ -10,7 +10,6 @@ from math import asin, degrees, sqrt
 import csv
 
 
-
 def match_freq_pol(file_name):
     pattern = r'(\d+(?:\.\d+)?)MHz_([XY])pol'
     match  = re.search(pattern, file_name)
