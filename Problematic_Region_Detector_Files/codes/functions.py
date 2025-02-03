@@ -39,8 +39,9 @@ def count_e_norm(dim1, dim2, dim3,e_tot):
 def cal_and_save_e_nrom(dim1, dim2, dim3, source_files, save_path,starstwith='FEKO'):
     os.makedirs(save_path, exist_ok=True)
     enorm_list =[]
-    os.chdir(source_files)
-    files = os.listdir()
+    # os.chdir(source_files)
+    files = os.listdir(source_files)
+    print("os.listdir()", files)
     mat_files = [file for file in files if file.endswith('.mat') and file.startswith(starstwith)]
     name = None
     os.makedirs(f'{save_path}/e_norms', exist_ok=True)
@@ -48,6 +49,7 @@ def cal_and_save_e_nrom(dim1, dim2, dim3, source_files, save_path,starstwith='FE
     for file in mat_files:
         print(f'Processing {file}')
         try:
+            print(f"loading {source_files}/{file}...")
             mat_file = loadmat(f'{source_files}/{file}')
             e_tot = count_e_tot(dim1, dim2, dim3, mat_file)
             e_norm = count_e_norm(dim1, dim2, dim3, e_tot)
