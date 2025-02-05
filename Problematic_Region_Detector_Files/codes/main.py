@@ -10,8 +10,8 @@ import argparse
 def main(fov, FEKO_SOURCE_PATH, SAVE_PATH, problematic_threshold,ant_start, ant_end):
     start_time = time.time()
     os.makedirs(f'{SAVE_PATH}/result', exist_ok=True)
-    output_path_csv = f'{SAVE_PATH}/result/problematic_regions_{start_time}.csv'
-    output_path_excel=f'{SAVE_PATH}/result/problematic_regions_{start_time}.xlsx'
+    output_path_csv = f'{SAVE_PATH}/result/problematic_regions{problematic_threshold}_fov{fov}_{start_time}.csv'
+    output_path_excel=f'{SAVE_PATH}/result/problematic_regions{problematic_threshold}_fov{fov}_{start_time}.xlsx'
     result_path = f"{SAVE_PATH}/result"
     
     ################ Cal and save e norm #################
