@@ -36,14 +36,31 @@ def count_e_norm(dim1, dim2, dim3,e_tot):
     E_norm = 20 * np.log10(e_tot/ E_total_max_matrix)
     return E_norm
 
+
+def detect_shape_of_data(source_files, starstwith='FEKO', ant_start=1, ant_end=256):
+    files = os.listdir(source_files)
+    # print("os.listdir()", files)
+    mat_files = [file for file in files if file.endswith('.mat') and file.startswith(starstwith)]
+    dim1, dim2, dim3 = loadmat(f'{source_files}/{mat_files[0]}')['Ephi'].shape
+    print("#\n# Detecting shape of data...")
+    print(f"ϕ angle points: {dim1}, θ angle points: {dim2}, Total antennas: {dim3}")
+    
+    if ant_end > dim3:
+        tot_ant = dim3-ant_start+1
+        ant_end = dim3
+    
+    tot_ant =ant_end-ant_start+1
+    print(f"Result will include {tot_ant} antenna from {ant_start} to {ant_end}")
+    return dim1, dim2, dim3
+    
+    
 def cal_and_save_e_nrom(dim1, dim2, dim3, source_files, save_path,starstwith='FEKO'):
     os.makedirs(save_path, exist_ok=True)
     enorm_list =[]
-    # os.chdir(source_files)
     files = os.listdir(source_files)
-    print("os.listdir()", files)
+    # print("os.listdir()", files)
     mat_files = [file for file in files if file.endswith('.mat') and file.startswith(starstwith)]
-    name = None
+    # name = None
     os.makedirs(f'{save_path}/e_norms', exist_ok=True)
 
     for file in mat_files:
@@ -185,35 +202,6 @@ def detect_bad_pattern(dfs, problematic_threshold = -3):
         PRC_ALL.append(pcr_ant)
     return PRC_ALL
 
-
-# def  identify_phi_edges(pro_file): # cut_box_based_on_phi
-#     """
-#     identify the phi edge of boxes
-#     """
-#     phi_edges = []
-#     for antenna in range(len(pro_file)):
-#         print(f"type(pro_file[antenna]) : {type(pro_file[antenna])}")
-#         print(f"type(pro_file[antenna]) : {pro_file[antenna]}")
-#         antenna_problematic_list = pro_file[antenna].copy()
-#         if antenna_problematic_list:
-#             temp = []
-#             temp.append([antenna_problematic_list[0]])
-#             for index in range(len(antenna_problematic_list)-1):
-#                 # get a tuple (351, 59, -3.9822506724878615), phi, theta,and power. angles need to ddevied by 2
-#                 current_problematic_location = (antenna_problematic_list[index]) 
-#                 next_problematic_location = (antenna_problematic_list[index+1])
-
-#                 if  next_problematic_location[0] - current_problematic_location[0] >  1 :
-#                     # print(current_problematic_location, next_problematic_location)
-#                     temp[-1].append(current_problematic_location)
-#                     temp.append([next_problematic_location])
-
-#             temp[-1].append(antenna_problematic_list[-1])
-#             phi_edges.append(temp)
-#         else:
-#             phi_edges.append([])
-#     return phi_edges
-
 def identify_phi_edges(problematic_data):
     """
     Identifies the φ (phi) edges of problematic regions for each antenna.
@@ -257,23 +245,6 @@ def identify_phi_edges(problematic_data):
             phi_edges.append([])
 
     return phi_edges
-
-
-
-# def get_phi_range(file, problematic_file):
-#     all_box = []
-#     for i in range(len(file)):
-#         phi = (file[i][0][0], file[i][1][0])
-#         temp_dbi = []
-#         temp_theta = []
-     
-#         for k in range(len(problematic_file)):
-#             if problematic_file[k][0] in range(phi[0],phi[1]+1):
-#                 temp_theta.append(problematic_file[k][1])
-#                 temp_dbi.append (problematic_file[k][2])
-#         theta = (np.min(temp_theta), np.max(temp_theta))
-#         all_box.append(([(i/2-180) for i in phi], [i/2 for i in theta]))
-#     return all_box
 
 def calculate_phi_theta_ranges(phi_groups, problematic_data):
     """
@@ -356,48 +327,188 @@ def process_problematic_region_data(file_path):
     # print(df['theta_left'])
     return df
 
-
-def plot_2d_contour(filename, fov, output_path=None, enorm_path= None):
+def plot_2d_eep(filename, fov, output_path=None, enorm_path= None, problematic_threshold=None):
     x_range = np.arange(0, fov +0.5, 0.5)
     y_range = np.arange(-180, 180.5, 0.5)
     X, Y = np.meshgrid(x_range, y_range)
     theta_range = np.where(x_range == fov)[0][0]
     e_norm = loadmat(f'{enorm_path}/{filename}')['e_norm']
     freq, pol = match_freq_pol(filename)
-
-    for antenna in range(256):
+    
+    ant_num = e_norm.shape[2]
+    print(f"shape of enorm, {e_norm.shape}, total antenna number is {ant_num}")
+    for antenna in range(ant_num):
         if filename.endswith('Xpol_enorm.mat'):
             df=process_xpol(e_norm, theta_range,antenna)
         elif filename.endswith('Ypol_enorm.mat'):
             df=process_ypol(e_norm, theta_range,antenna)
 
-        # Plot the contour
-        plt.figure(figsize = (12,5))
-        plt.subplot(121)
-        levels = sorted([min(df.values.flatten()), -9, -6, -3])
-        contour_plot = plt.contourf(X, Y, df.values,levels=levels,cmap= 'Spectral',vmin =-12)
-        c = plt.contour(X, Y, df.values,levels, linestyles='dashed', colors = 'k', alpha = .8)
-        plt.clabel(c, inline=True, fontsize=8, colors = 'k')
-        colorbar = plt.colorbar(contour_plot, label='Normalised EEPs, dB')
-        
-        plt.subplot(122)
         locat = np.unravel_index(np.argmax(df), df.shape)
-        plt.scatter(locat[1]/2, (locat[0] / 2)-180, c="red")
+        plt.scatter(locat[1]/2, (locat[0] / 2)-180, c="gray", marker='+', s=80, linewidths=1.5)
         print((locat[0] / 2)-180,locat[1]/2 )
-        plt.imshow(df, aspect = 'auto', extent=[0,90,-180,180], alpha = 1, origin = "lower", cmap= 'Spectral')
+        plt.imshow(df, aspect = 'auto', extent=[0,90,-180,180], alpha = 1, origin = "lower", cmap= 'viridis')
         plt.colorbar()
         
-
         # Set labels and title
-        title = f"Problematic regions at {freq}MHz in {pol}pol, antenna #{antenna+1}"
-        # plt.title(title)
-        plt.suptitle(title)
+        title = f"Polar coordinate: {freq}MHz in {pol}pol, antenna #{antenna+1}"
+        plt.title(title)
         plt.xlabel('(θ deg)')
         plt.ylabel('(φ deg)')
-        # plt.ylim(-180,180)
         plt.grid()
         plt.tight_layout()
         if output_path is not None:
             plt.savefig(f"{output_path}/{freq}MHz_{pol}pol_#{antenna+1}.png", dpi=100)
+        plt.show()
+        plt.close()
+
+def plot_2d_contour(e_norm_filename, fov, output_path=None, enorm_folder= None, problematic_threshold=None):
+    x_range = np.arange(0, fov +0.5, 0.5)
+    y_range = np.arange(-180, 180.5, 0.5)
+    X, Y = np.meshgrid(x_range, y_range)
+    theta_range = np.where(x_range == fov)[0][0]
+    e_norm = loadmat(f'{enorm_folder}/{e_norm_filename}')['e_norm']
+    freq, pol = match_freq_pol(e_norm_filename)
+    
+    ant_num = e_norm.shape[2]
+    print(f"shape of enorm, {e_norm.shape}, total antenna number is {ant_num}")
+    for antenna in range(ant_num):
+        if e_norm_filename.endswith('Xpol_enorm.mat'):
+            df=process_xpol(e_norm, theta_range,antenna)
+        elif e_norm_filename.endswith('Ypol_enorm.mat'):
+            df=process_ypol(e_norm, theta_range,antenna)
+
+        # Plot the contour
+        locat = np.unravel_index(np.argmax(df), df.shape)
+        
+        plt.figure(figsize = (6,5))
+        levels = sorted([min(df.values.flatten()), problematic_threshold-10, problematic_threshold-5, problematic_threshold])
+        contour_plot = plt.contourf(X, Y, df.values,levels=levels,cmap= 'viridis',vmin =problematic_threshold-20) #vmin =-12 Spectral viridis
+        c = plt.contour(X, Y, df.values,levels, linestyles='dashed', colors = 'k', alpha = .8)
+        plt.clabel(c, inline=True, fontsize=8, colors = 'k')
+        colorbar = plt.colorbar(contour_plot, label='Normalised EEPs, dB')
+        plt.scatter(locat[1]/2, (locat[0] / 2)-180, c="k", marker='+', s=50, linewidths=1.5) # plot location of max power
+        
+        # Annotate the exact coordinates
+        coords_text = f"({(locat[0] / 2) - 180:.2f}\u00B0, {locat[1] / 2:.2f}\u00B0)"
+        plt.annotate(coords_text, 
+                     xy=(locat[1] / 2, (locat[0] / 2) - 180), 
+                     xytext=(locat[1] / 2 , (locat[0] / 2) - 190),  # Slight offset for readability
+                     fontsize=6, 
+                     fontweight='bold',
+                     color='k',
+                     ha='center',
+                     va='top')
+
+        # Set labels and title
+        title = f"Polar Coordinate: {freq}MHz in {pol}pol, antenna #{antenna+1}"
+        plt.title(title)
+        plt.xlabel('(θ deg)')
+        plt.ylabel('(φ deg)')
+        plt.grid()
+        plt.show()
+        plt.close()
+
+def get_kx_ky(FEKO_data_path):
+    all_mat= os.listdir(FEKO_data_path)
+    data = loadmat(f"{FEKO_data_path}/{all_mat[0]}")
+    return data['kx'], data['ky'] 
+        
+def plot_uv_plane(eep, kx, ky, freq, pol, antenna, problematic_threshold):
+    mesh = plt.pcolormesh(kx, ky, eep, shading='auto', cmap='viridis', vmin=np.min(eep), vmax=problematic_threshold)  # Heatmap
+    mesh.set_clim(np.min(eep), problematic_threshold)
+    mesh.cmap.set_over('w')
+    cbar = plt.colorbar(mesh, label='Normalised power (dB)')
+    cbar.set_ticks(np.linspace(np.min(eep), problematic_threshold, num=5))  # Set proper tick marks
+    
+    # Add contour line where eep == problematic_threshold
+    contour = plt.contour(kx, ky, eep, levels=[problematic_threshold], colors='k', linewidths=1.2)
+    plt.clabel(contour, inline=True, fontsize=8, fmt=f"{problematic_threshold:.1f} dB", colors='k')
+
+    plt.title(f'uv-plane')
+    plt.xlabel('u (kx)')
+    plt.ylabel('v (ky)')
+    plt.xticks(np.arange(-1, 1.2, 0.25))
+    plt.yticks(np.arange(-1, 1.2, 0.25))
+    plt.axis('equal')
+    title = f"UV plane: {freq}MHz in {pol}pol, antenna #{antenna}"
+    plt.title(title)
+    
+    # plt.scatter(0, 0, color='k', marker='o', s=40,  linewidth=1.2, label="(0°, 0°)")
+    plt.annotate("(0°, 0°)", 
+                 xy=(0, 0), 
+                 xytext=(5, 5),  # Slight offset for readability
+                 textcoords='offset points',
+                 fontsize=5, 
+                 fontweight='bold',
+                 color='k')
+    
+    plt.grid()
+   
+
+def plot_it(enorm_folder, e_norm_filename, kx, ky, output_path, problematic_threshold, ant_start=1, ant_end=256):
+    fov=90
+    x_range = np.arange(0, fov +0.5, 0.5)
+    y_range = np.arange(-180, 180.5, 0.5)
+    X, Y = np.meshgrid(x_range, y_range)
+    theta_range = np.where(x_range == fov)[0][0]
+    
+    e_norm = loadmat(f'{enorm_folder}/{e_norm_filename}')['e_norm']
+    freq, pol = match_freq_pol(e_norm_filename)
+    
+    ant_num = e_norm.shape[2]
+    print(f"shape of enorm, {e_norm.shape}, total antenna number is {ant_num}")
+    
+    
+    ant_start_idx = ant_start - 1  # Adjust for 0-based indexing
+    # Scenario 1: When user wants to select a single antenna
+    if ant_end == ant_start:
+        antennas = [ant_start_idx]
+    # Scenario 2: When user wants to select a range of antennas
+    elif ant_end > ant_start:
+        antennas = range(ant_start_idx, ant_end)
+    
+    # for antenna in range(ant_num):
+    for antenna in antennas:
+        if e_norm_filename.endswith('Xpol_enorm.mat'):
+            df=process_xpol(e_norm, theta_range,antenna)
+        elif e_norm_filename.endswith('Ypol_enorm.mat'):
+            df=process_ypol(e_norm, theta_range,antenna)
+
+        # Plot the contour
+        plt.figure(figsize = (13,5))
+        plt.subplot(121)
+        locat = np.unravel_index(np.argmax(df), df.shape)
+        levels = sorted([min(df.values.flatten()), problematic_threshold-10, problematic_threshold-5, problematic_threshold])
+        contour_plot = plt.contourf(X, Y, df.values,levels=levels,cmap= 'viridis',vmin =problematic_threshold-20) #vmin =-12 Spectral viridis
+        c = plt.contour(X, Y, df.values,levels, linestyles='dashed', colors = 'k', alpha = .8)
+        plt.clabel(c, inline=True, fontsize=8, colors = 'k')
+        colorbar = plt.colorbar(contour_plot, label='Normalised power (dB)')
+        plt.scatter(locat[1]/2, (locat[0] / 2)-180, c="k", marker='+', s=50, linewidths=1.2, edgecolors='k') # plot location of max power
+        
+        # Annotate the exact coordinates
+        coords_text = f"({(locat[0] / 2) - 180:.2f}\u00B0, {locat[1] / 2:.2f}\u00B0)"
+        plt.annotate(coords_text, 
+                     xy=(locat[1] / 2, (locat[0] / 2) - 180), 
+                     xytext=(locat[1] / 2 , (locat[0] / 2) - 190),  # Slight offset for readability
+                     fontsize=6, 
+                     fontweight='bold',
+                     color='k',
+                     ha='center',
+                     va='top')
+
+        # Set labels and title
+        title = f"Polar Coordinate: {freq}MHz in {pol}pol, antenna #{antenna+1}"
+        plt.title(title)
+        plt.xlabel('(θ deg)')
+        plt.ylabel('(φ deg)')
+        plt.grid()
+        
+        plt.subplot(122)
+        plot_uv_plane(e_norm[:,:,antenna], kx, ky, freq, pol, antenna+1, problematic_threshold)
+            
+        plt.tight_layout()
+        if output_path is not None:
+            os.makedirs(f"{output_path}/plots", exist_ok = True)
+            plt.savefig(f"{output_path}/plots/{freq}MHz_{pol}pol_#{antenna+1}_{problematic_threshold}dB.png", dpi=100)
         plt.show()
         plt.close()
