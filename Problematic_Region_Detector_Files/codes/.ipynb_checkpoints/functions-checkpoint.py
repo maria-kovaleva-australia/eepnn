@@ -424,13 +424,12 @@ def plot_uv_plane(eep, kx, ky, freq, pol, antenna, problematic_threshold):
     contour = plt.contour(kx, ky, eep, levels=[problematic_threshold], colors='k', linewidths=1.2)
     plt.clabel(contour, inline=True, fontsize=8, fmt=f"{problematic_threshold:.1f} dB", colors='k')
 
-    plt.title(f'uv-plane')
     plt.xlabel('u (kx)')
     plt.ylabel('v (ky)')
     plt.xticks(np.arange(-1, 1.2, 0.25))
     plt.yticks(np.arange(-1, 1.2, 0.25))
     plt.axis('equal')
-    title = f"UV plane: {freq}MHz in {pol}pol, antenna #{antenna}"
+    title = f"UV Plane: {freq}MHz in {pol}pol, antenna #{antenna}"
     plt.title(title)
     
     # plt.scatter(0, 0, color='k', marker='o', s=40,  linewidth=1.2, label="(0°, 0°)")
@@ -483,7 +482,7 @@ def plot_it(enorm_folder, e_norm_filename, kx, ky, output_path, problematic_thre
         c = plt.contour(X, Y, df.values,levels, linestyles='dashed', colors = 'k', alpha = .8)
         plt.clabel(c, inline=True, fontsize=8, colors = 'k')
         colorbar = plt.colorbar(contour_plot, label='Normalised power (dB)')
-        plt.scatter(locat[1]/2, (locat[0] / 2)-180, c="k", marker='+', s=50, linewidths=1.2, edgecolors='k') # plot location of max power
+        plt.scatter(locat[1]/2, (locat[0] / 2)-180, c="k", marker='+', s=50, linewidths=1.2) # plot location of max power
         
         # Annotate the exact coordinates
         coords_text = f"({(locat[0] / 2) - 180:.2f}\u00B0, {locat[1] / 2:.2f}\u00B0)"
