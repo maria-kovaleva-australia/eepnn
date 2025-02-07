@@ -11,25 +11,21 @@ def main(fov, FEKO_SOURCE_PATH, SAVE_PATH, problematic_threshold,ant_start, ant_
     start_time = time.time()
     os.makedirs(f'{SAVE_PATH}/result', exist_ok=True)
     output_path_csv = f'{SAVE_PATH}/result/problematic_regions{problematic_threshold}_fov{fov}_{start_time}.csv'
-    # output_path_excel=f'{SAVE_PATH}/result/problematic_regions{problematic_threshold}_fov{fov}_{start_time}.xlsx'
+    output_path_excel=f'{SAVE_PATH}/result/problematic_regions{problematic_threshold}_fov{fov}_{start_time}.xlsx'
     result_path = f"{SAVE_PATH}/result"
     
     ################ Cal and save e norm #################
     # get shape of FEKO data
-    print(f"Calculating EEPs in logarithmic scale...\n")
     dim1, dim2, dim3 = F.detect_shape_of_data(FEKO_SOURCE_PATH, ant_start=ant_start, ant_end=ant_end)
     F.cal_and_save_e_nrom(dim1, dim2, dim3, FEKO_SOURCE_PATH, result_path)
-    print(f'    -. Saved e_norm to {result_path}/e_norms')
-    
     # adapt to the actual last antenna
     if ant_end >  dim3:
         ant_end =  dim3  
         
     ################ Plot EEPs #################
-    print(f"\nPlotting EEPs in polar coordinate and uv plane...\n")
     kx, ky = F.get_kx_ky(FEKO_SOURCE_PATH)
     e_norm_files = [os.listdir(f"{result_path}/e_norms")][0]
-    # print('e_norm_files:', e_norm_files)
+    print('e_norm_files:', e_norm_files)
     for file_ in e_norm_files:
         if file_.endswith('enorm.mat'):
             F.plot_it(f"{result_path}/e_norms", 
@@ -38,22 +34,20 @@ def main(fov, FEKO_SOURCE_PATH, SAVE_PATH, problematic_threshold,ant_start, ant_
                       output_path=result_path, 
                       problematic_threshold=problematic_threshold, 
                       ant_start=ant_start, ant_end=ant_end)
-    print(f'    -. saved plots to {result_path}/plots')    
+        
     ################# detect probelmatic regions ############################
-    print(f"\nDetecting problematic regions <= {problematic_threshold} in the FOV {fov}\u00B0")
-    print(f"    -. Result will include {ant_end - ant_start +1} antenna/antennas, including antenna {ant_start} to {ant_end}")
     with open(output_path_csv, 'w') as f:
         writer = csv.writer(f)
         writer.writerow(['class','theta_range', 'phi_range', 'antenna', 'freq.', 'pol.', 'FOV',
                          'minimum_dB_in_region', 'ant_max_power', 'locat_max_power'])
         e_norm_files = [os.listdir(f"{result_path}/e_norms")][0]
-        # print(e_norm_files)
+        print(e_norm_files)
         for file_ in e_norm_files:
             if file_.endswith('enorm.mat'):
-                # print(f"processing {file_}")
+                print(f"processing {file_}")
                 freq, pol = F.match_freq_pol(file_)
                 e_norm = F.process_e_norm(f"{result_path}/e_norms", file_, fov, ant_start=ant_start, ant_end=ant_end)
-                # print(f"\n    -selected {len(e_norm)} EEPs")
+                print(f"selected {len(e_norm)} EEPs")
                
                 # output a list(len is antenna number) of list(len is number of PR) of tuples (ϕ,θ,e_norm)
                 PR_container = F.detect_bad_pattern(e_norm, problematic_threshold=problematic_threshold) 
@@ -87,9 +81,9 @@ def main(fov, FEKO_SOURCE_PATH, SAVE_PATH, problematic_threshold,ant_start, ant_
     end_time = time.time()
     running_time = end_time - start_time
     df = F.process_problematic_region_data(output_path_csv)
-    # df.to_excel(output_path_excel,index=False)
-    print(f"    -. Saved result to {output_path_csv}")
-    print(f"    -. Total running time: {running_time/60:.2f} minutes")  
+    df.to_excel(output_path_excel,index=False)
+    print(f"saved result to {result_path} folder")
+    print("Total running time:", running_time/60, "minutes")  
 
 
 
