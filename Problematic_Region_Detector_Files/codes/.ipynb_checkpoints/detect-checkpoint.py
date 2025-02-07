@@ -38,10 +38,13 @@ def main(fov, FEKO_SOURCE_PATH, SAVE_PATH, problematic_threshold,ant_start, ant_
                       output_path=result_path, 
                       problematic_threshold=problematic_threshold, 
                       ant_start=ant_start, ant_end=ant_end)
-    print(f'    -. saved plots to {result_path}/plots')    
+
+    print(f"    -. Plots include {ant_end - ant_start + 1} antenna(s), covering antennas {ant_start} to {ant_end}.")
+    print(f'    -. Saved plots to {result_path}/plots') 
+    
     ################# detect probelmatic regions ############################
     print(f"\nDetecting problematic regions <= {problematic_threshold} in the FOV {fov}\u00B0")
-    print(f"    -. Result will include {ant_end - ant_start +1} antenna/antennas, including antenna {ant_start} to {ant_end}")
+    print(f"    -. Result included {ant_end - ant_start +1} antenna/antennas, including antenna {ant_start} to {ant_end}")
     with open(output_path_csv, 'w') as f:
         writer = csv.writer(f)
         writer.writerow(['class','theta_range', 'phi_range', 'antenna', 'freq.', 'pol.', 'FOV',
@@ -89,7 +92,7 @@ def main(fov, FEKO_SOURCE_PATH, SAVE_PATH, problematic_threshold,ant_start, ant_
     df = F.process_problematic_region_data(output_path_csv)
     # df.to_excel(output_path_excel,index=False)
     print(f"    -. Saved result to {output_path_csv}")
-    print(f"    -. Total running time: {running_time/60:.2f} minutes")  
+    print(f"\nTotal running time: {running_time/60:.2f} minutes")  
 
 
 

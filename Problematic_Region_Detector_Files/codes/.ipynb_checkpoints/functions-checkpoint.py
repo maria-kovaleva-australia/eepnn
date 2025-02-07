@@ -494,7 +494,7 @@ def add_phi0_coor(pol):
 
     if phi0_u is not None and phi0_v is not None:
         # plt.scatter(phi0_u, phi0_v, color='r', marker='o', s=50, zorder=5)
-        plt.annotate(r"$\phi=0^\circ$", 
+        plt.annotate(r"$φ=0^\circ$", 
                      xy=(phi0_u, phi0_v), 
                      xytext=(1, 2), 
                      textcoords='offset points', 
