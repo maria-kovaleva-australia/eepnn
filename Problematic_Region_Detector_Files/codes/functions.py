@@ -417,7 +417,7 @@ def get_kx_ky(FEKO_data_path):
     data = loadmat(f"{FEKO_data_path}/{all_mat[0]}")
     return data['kx'], data['ky'] 
         
-def plot_uv_plane(eep, kx, ky, freq, pol, antenna, problematic_threshold):
+def plot_uv_plane(eep, kx, ky, freq, pol, antenna, problematic_threshold, locat):
     mesh = plt.pcolormesh(kx, ky, eep, shading='nearest', cmap='viridis', vmin=np.min(eep), vmax=problematic_threshold)  # Heatmap shading='auto'
     mesh.set_clim(np.min(eep), problematic_threshold)
     mesh.cmap.set_over('w')
@@ -426,14 +426,14 @@ def plot_uv_plane(eep, kx, ky, freq, pol, antenna, problematic_threshold):
     
     # Add contour line where eep == problematic_threshold
     contour = plt.contour(kx, ky, eep, levels=[problematic_threshold], colors='k', linewidths=1.2)
-    plt.clabel(contour, inline=True, fontsize=8, fmt=f"{problematic_threshold:.1f} dB", colors='k')
+    plt.clabel(contour, inline=True, fontsize=8, fmt=f"{problematic_threshold} dB", colors='k')
 
     plt.xlabel('u (kx)')
     plt.ylabel('v (ky)')
     plt.xticks(np.arange(-1, 1.2, 0.25))
     plt.yticks(np.arange(-1, 1.2, 0.25))
     plt.axis('equal')
-    title = f"UV Plane: {freq}MHz in {pol}pol, antenna #{antenna}"
+    title = f"{freq}MHz in {pol}pol, antenna #{antenna}"
     plt.title(title)
     
     
@@ -443,9 +443,10 @@ def plot_uv_plane(eep, kx, ky, freq, pol, antenna, problematic_threshold):
     max_ky = ky[max_power_idx[0]][max_power_idx[1]]  # Index corresponds to ky row, kx column
     
     plt.scatter(max_kx, max_ky, color='k', marker='+', s=50, zorder=5)
-    plt.annotate(f"(u: {max_kx:.3f}, v: {max_ky:.3f})", 
+    coords_text = f"({locat[1] / 2:.1f}\u00B0, {(locat[0] / 2) - 180:.1f}\u00B0)"
+    plt.annotate(coords_text,         #f"(u: {max_kx:.3f}, v: {max_ky:.3f})", 
                  xy=(max_kx, max_ky), 
-                 xytext=(3, 3),  # Slight offset for readability
+                 xytext=(3, 3),       # Slight offset for readability
                  textcoords='offset points', #axes fraction
                  fontsize=6, 
                  fontweight='bold',
@@ -458,7 +459,7 @@ def plot_uv_plane(eep, kx, ky, freq, pol, antenna, problematic_threshold):
 def plot_max_power_location(locat):
     plt.scatter(locat[1]/2, (locat[0] / 2)-180, c="k", marker='+', s=50, linewidths=1.2) # plot location of max power
     # Annotate the exact coordinates
-    coords_text = f"(φ: {(locat[0] / 2) - 180:.1f}\u00B0, θ: {locat[1] / 2:.1f}\u00B0)"
+    coords_text = f"({locat[1] / 2:.1f}\u00B0, {(locat[0] / 2) - 180:.1f}\u00B0)"
     plt.annotate(coords_text, 
                  xy=(locat[1] / 2, (locat[0] / 2) - 180), 
                  xytext=(locat[1] / 2 + 2, (locat[0] / 2) - 180 + 10),  # Slight offset for readability
@@ -476,7 +477,7 @@ def plot_polar_coor(X,Y, locat, df, problematic_threshold,freq, pol, antenna):
     colorbar = plt.colorbar(contour_plot, label='Normalised power (dB)')
     plot_max_power_location(locat)
 
-    title = f"Polar Coordinate: {freq}MHz in {pol}pol, antenna #{antenna}"
+    title = f"{freq}MHz in {pol}pol, antenna #{antenna}"
     plt.title(title)
     plt.xlabel('(θ deg)')
     plt.ylabel('(φ deg)')
@@ -539,7 +540,7 @@ def plot_it(enorm_folder, e_norm_filename, kx, ky, output_path, problematic_thre
         
         # plot uv
         plt.subplot(122)
-        plot_uv_plane(e_norm[:, :, antenna], kx, ky, freq, pol, antenna + 1, problematic_threshold)
+        plot_uv_plane(e_norm[:, :, antenna], kx, ky, freq, pol, antenna + 1, problematic_threshold, locat)
         
         plt.tight_layout()
     

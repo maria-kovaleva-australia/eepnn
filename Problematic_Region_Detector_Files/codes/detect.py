@@ -11,14 +11,13 @@ def main(fov, FEKO_SOURCE_PATH, SAVE_PATH, problematic_threshold,ant_start, ant_
     start_time = time.time()
     os.makedirs(f'{SAVE_PATH}/result', exist_ok=True)
     output_path_csv = f'{SAVE_PATH}/result/problematic_regions{problematic_threshold}_fov{fov}_{start_time}.csv'
-    # output_path_excel=f'{SAVE_PATH}/result/problematic_regions{problematic_threshold}_fov{fov}_{start_time}.xlsx'
     result_path = f"{SAVE_PATH}/result"
     
     ################ Cal and save e norm #################
     # get shape of FEKO data
     print(f"Calculating EEPs in logarithmic scale...\n")
     dim1, dim2, dim3 = F.detect_shape_of_data(FEKO_SOURCE_PATH, ant_start=ant_start, ant_end=ant_end)
-    F.cal_and_save_e_nrom(dim1, dim2, dim3, FEKO_SOURCE_PATH, result_path)
+    # F.cal_and_save_e_nrom(dim1, dim2, dim3, FEKO_SOURCE_PATH, result_path)
     print(f'    -. Saved e_norm to {result_path}/e_norms')
     
     # adapt to the actual last antenna
@@ -90,7 +89,7 @@ def main(fov, FEKO_SOURCE_PATH, SAVE_PATH, problematic_threshold,ant_start, ant_
     end_time = time.time()
     running_time = end_time - start_time
     df = F.process_problematic_region_data(output_path_csv)
-    # df.to_excel(output_path_excel,index=False)
+
     print(f"    -. Saved result to {output_path_csv}")
     print(f"\nTotal running time: {running_time/60:.2f} minutes")  
 
