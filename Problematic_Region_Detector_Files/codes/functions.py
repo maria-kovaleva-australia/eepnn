@@ -316,20 +316,20 @@ def get_minimum_power_dB(file, problematic_file):
         min_dB_list.append(min_dB)
     return min_dB_list
 
-def transform_str_to_float(string):
-    numbers = string.strip('[]').split(',')
-    float_numbers = [float(num.strip()) for num in numbers]
-    return float_numbers
+# def transform_str_to_float(string):
+#     numbers = string.strip('[]').split(',')
+#     float_numbers = [float(num.strip()) for num in numbers]
+#     return float_numbers
 
-def process_problematic_region_data(file_path):
-    df = pd.read_csv(file_path)
-    df['theta_range'] = df['theta_range'].apply(lambda x: transform_str_to_float(x))
-    df['phi_range'] = df['phi_range'].apply(lambda x: transform_str_to_float(x))
-    df['minimum_dB_in_region'] = df['minimum_dB_in_region'].apply(lambda x: float(x))
-    df['theta_left'] = df['theta_range'].apply(lambda x: x[0])
-    # print(df.shape)
-    # print(df['theta_left'])
-    return df
+# def process_problematic_region_data(file_path):
+#     df = pd.read_csv(file_path)
+#     df['theta_range'] = df['theta_range'].apply(lambda x: transform_str_to_float(x))
+#     df['phi_range'] = df['phi_range'].apply(lambda x: transform_str_to_float(x))
+#     df['minimum_dB_in_region'] = df['minimum_dB_in_region'].apply(lambda x: float(x))
+#     df['theta_left'] = df['theta_range'].apply(lambda x: x[0])
+#     # print(df.shape)
+#     # print(df['theta_left'])
+#     return df
 
 def plot_2d_eep(filename, fov, output_path=None, enorm_path= None, problematic_threshold=None):
     x_range = np.arange(0, fov +0.5, 0.5)
@@ -365,52 +365,7 @@ def plot_2d_eep(filename, fov, output_path=None, enorm_path= None, problematic_t
         plt.show()
         plt.close()
 
-# def plot_2d_contour(e_norm_filename, fov, output_path=None, enorm_folder= None, problematic_threshold=None):
-#     x_range = np.arange(0, fov +0.5, 0.5)
-#     y_range = np.arange(-180, 180.5, 0.5)
-#     X, Y = np.meshgrid(x_range, y_range)
-#     theta_range = np.where(x_range == fov)[0][0]
-#     e_norm = loadmat(f'{enorm_folder}/{e_norm_filename}')['e_norm']
-#     freq, pol = match_freq_pol(e_norm_filename)
-    
-#     ant_num = e_norm.shape[2]
-#     # print(f"shape of enorm, {e_norm.shape}, total antenna number is {ant_num}")
-#     for antenna in range(ant_num):
-#         if e_norm_filename.endswith('Xpol_enorm.mat'):
-#             df=process_xpol(e_norm, theta_range,antenna)
-#         elif e_norm_filename.endswith('Ypol_enorm.mat'):
-#             df=process_ypol(e_norm, theta_range,antenna)
 
-#         # Plot the contour
-#         locat = np.unravel_index(np.argmax(df), df.shape)
-        
-#         plt.figure(figsize = (6,5))
-#         levels = sorted([min(df.values.flatten()), problematic_threshold-10, problematic_threshold-5, problematic_threshold])
-#         contour_plot = plt.contourf(X, Y, df.values,levels=levels,cmap= 'viridis',vmin =problematic_threshold-20) #vmin =-12 Spectral viridis
-#         c = plt.contour(X, Y, df.values,levels, linestyles='dashed', colors = 'k', alpha = .8)
-#         plt.clabel(c, inline=True, fontsize=8, colors = 'k')
-#         colorbar = plt.colorbar(contour_plot, label='Normalised EEPs, dB')
-#         plt.scatter(locat[1]/2, (locat[0] / 2)-180, c="k", marker='+', s=50, linewidths=1.5) # plot location of max power
-        
-#         # Annotate the exact coordinates
-#         coords_text = f"({(locat[0] / 2) - 180:.2f}\u00B0, {locat[1] / 2:.2f}\u00B0)"
-#         plt.annotate(coords_text, 
-#                      xy=(locat[1] / 2, (locat[0] / 2) - 180), 
-#                      xytext=(locat[1] / 2 , (locat[0] / 2) - 190),  # Slight offset for readability
-#                      fontsize=6, 
-#                      fontweight='bold',
-#                      color='k',
-#                      ha='center',
-#                      va='top')
-
-#         # Set labels and title
-#         title = f"Polar Coordinate: {freq}MHz in {pol}pol, antenna #{antenna+1}"
-#         plt.title(title)
-#         plt.xlabel('(θ deg)')
-#         plt.ylabel('(φ deg)')
-#         plt.grid()
-#         plt.show()
-#         plt.close()
 
 def get_kx_ky(FEKO_data_path):
     all_mat= os.listdir(FEKO_data_path)

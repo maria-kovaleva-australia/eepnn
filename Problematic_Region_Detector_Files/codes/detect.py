@@ -6,103 +6,196 @@ import os
 import argparse
 
 
+################ Cal and save e norm #################
 
-def main(fov, FEKO_SOURCE_PATH, SAVE_PATH, problematic_threshold,ant_start, ant_end):
-    start_time = time.time()
-    os.makedirs(f'{SAVE_PATH}/result', exist_ok=True)
-    output_path_csv = f'{SAVE_PATH}/result/problematic_regions{problematic_threshold}_fov{fov}_{start_time}.csv'
-    result_path = f"{SAVE_PATH}/result"
+class EEPProblematicRegionProcessor:
+    """
+    A class for processing, analyzing, and detecting problematic regions in EEP (Embedded Element Pattern) data.
+
+    This class provides functionality to:
+    - Compute and save normalized EEP values.
+    - Generate plots for EEP data in polar and UV planes.
+    - Detect problematic regions in EEP data and save the results.
+
+    Attributes:
+        fov (float): Field of view in degrees.
+        problematic_threshold (float): Threshold to define problematic regions.
+        ant_start (int): Starting index of the antenna.
+        ant_end (int): Ending index of the antenna.
+        FEKO_SOURCE_PATH (str): Path to the FEKO simulation data.
+        SAVE_PATH (str): Directory where results will be saved.
+        result_path (str): Path where processed results are stored.
+        output_path_csv (str): File path for saving detected problematic regions.
+    """
     
-    ################ Cal and save e norm #################
-    # get shape of FEKO data
-    print(f"Calculating EEPs in logarithmic scale...\n")
-    dim1, dim2, dim3 = F.detect_shape_of_data(FEKO_SOURCE_PATH, ant_start=ant_start, ant_end=ant_end)
-    # F.cal_and_save_e_nrom(dim1, dim2, dim3, FEKO_SOURCE_PATH, result_path)
-    print(f'    -. Saved e_norm to {result_path}/e_norms')
-    
-    # adapt to the actual last antenna
-    if ant_end >  dim3:
-        ant_end =  dim3  
+    def __init__(self, fov, FEKO_SOURCE_PATH, SAVE_PATH, problematic_threshold,ant_start, ant_end):
+        """
+        Initializes the EEPProblematicRegionProcessor class with the given parameters.
+
+        Args:
+            fov (float): Field of view in degrees.
+            FEKO_SOURCE_PATH (str): Path to the FEKO simulation data.
+            SAVE_PATH (str): Directory where results will be saved.
+            problematic_threshold (float): Threshold to define problematic regions.
+            ant_start (int): Starting index of the antenna.
+            ant_end (int): Ending index of the antenna.
+        """
+        # Shared attributes for processing
+        self.fov=fov
+        self.problematic_threshold=problematic_threshold
+        self.ant_start=ant_start
+        self.ant_end=ant_end
         
-    ################ Plot EEPs #################
-    print(f"\nPlotting EEPs in polar coordinate and uv plane...\n")
-    kx, ky = F.get_kx_ky(FEKO_SOURCE_PATH)
-    e_norm_files = [os.listdir(f"{result_path}/e_norms")][0]
-    # print('e_norm_files:', e_norm_files)
-    for file_ in e_norm_files:
-        if file_.endswith('enorm.mat'):
-            F.plot_it(f"{result_path}/e_norms", 
-                      file_, 
-                      kx, ky, 
-                      output_path=result_path, 
-                      problematic_threshold=problematic_threshold, 
-                      ant_start=ant_start, ant_end=ant_end)
+        # Shared attributes for saving
+        self.FEKO_SOURCE_PATH=FEKO_SOURCE_PATH
+        self.SAVE_PATH=SAVE_PATH
+        self.result_path = f"{self.SAVE_PATH}/result"
+        self.output_path_csv = f"{self.result_path}/problematic_regions{self.problematic_threshold}_fov{self.fov}_{time.time()}.csv"
+        os.makedirs(self.result_path, exist_ok=True)
 
-    print(f"    -. Plots include {ant_end - ant_start + 1} antenna(s), covering antennas {ant_start} to {ant_end}.")
-    print(f'    -. Saved plots to {result_path}/plots') 
+    def compute_and_store_e_norms(self):
+        """
+        Computes and saves normalized EEP values.
+
+        This function:
+        - Detects the shape of the FEKO dataset.
+        - Computes and stores the EEP norm values.
+        - Ensures the ending antenna index is within the dataset bounds.
+
+        Prints:
+            - Progress updates and total computation time.
+        """
+   
+        # get shape of FEKO data
+        s_time = time.time()
+        print(f"Calculating EEPs in logarithmic scale...\n")
+        dim1, dim2, dim3 = F.detect_shape_of_data(self.FEKO_SOURCE_PATH, ant_start=self.ant_start, ant_end=self.ant_end)
+        F.cal_and_save_e_nrom(dim1, dim2, dim3, self.FEKO_SOURCE_PATH, self.result_path)
+        print(f'    -. Saved e_norm to {self.result_path}/e_norms')
+  
+         # Adapt to the actual last antenna
+        if self.ant_end > dim3:
+            print(f"    -. Adjusted ant_end from {self.ant_end} to {dim3}")
+            self.ant_end = dim3  # Correctly updates the instance variable
+        print(f"    -. Total time spent for this task: {(time.time()-s_time)/60:.2f} minutes.")
+
     
-    ################# detect probelmatic regions ############################
-    print(f"\nDetecting problematic regions <= {problematic_threshold} in the FOV {fov}\u00B0")
-    print(f"    -. Result included {ant_end - ant_start +1} antenna/antennas, including antenna {ant_start} to {ant_end}")
-    with open(output_path_csv, 'w') as f:
-        writer = csv.writer(f)
-        writer.writerow(['class','theta_range', 'phi_range', 'antenna', 'freq.', 'pol.', 'FOV',
-                         'minimum_dB_in_region', 'ant_max_power', 'locat_max_power'])
-        e_norm_files = [os.listdir(f"{result_path}/e_norms")][0]
-        # print(e_norm_files)
+    def plot_(self):
+        """
+        Generates and saves plots of EEP data in polar and UV coordinate planes.
+
+        This function:
+        - Loads computed EEP norms.
+        - Plots EEPs using `F.plot_it`.
+        - Saves the generated plots to the results directory.
+
+        Prints:
+            - Progress updates and total time taken.
+        """
+        s_time = time.time()
+        print(f"\nPlotting EEPs in polar coordinate and uv plane...\n")
+        
+        kx, ky = F.get_kx_ky(self.FEKO_SOURCE_PATH)
+        e_norm_files = [os.listdir(f"{self.result_path}/e_norms")][0]
         for file_ in e_norm_files:
             if file_.endswith('enorm.mat'):
-                # print(f"processing {file_}")
-                freq, pol = F.match_freq_pol(file_)
-                e_norm = F.process_e_norm(f"{result_path}/e_norms", file_, fov, ant_start=ant_start, ant_end=ant_end)
-                # print(f"\n    -selected {len(e_norm)} EEPs")
-               
-                # output a list(len is antenna number) of list(len is number of PR) of tuples (ϕ,θ,e_norm)
-                PR_container = F.detect_bad_pattern(e_norm, problematic_threshold=problematic_threshold) 
-             
-                PRs = F.identify_phi_edges(PR_container)
-                for antenna in range(len(PRs)):
-                    ant_num = antenna+ant_start
-                    boxes = F.calculate_phi_theta_ranges(PRs[antenna], PR_container[antenna])
-                    lowest_dB_list = F.get_minimum_power_dB(PRs[antenna], PR_container[antenna])
-                    ant_max_power = e_norm[antenna].max().max()
+                F.plot_it(f"{self.result_path}/e_norms", 
+                          file_, 
+                          kx, ky, 
+                          output_path=self.result_path, 
+                          problematic_threshold=self.problematic_threshold, 
+                          ant_start=self.ant_start, ant_end=self.ant_end)
 
-                    p, t= divmod(e_norm[antenna].values.argmax(), e_norm[antenna].shape[1])
-                    p_adj = (p / 2) - 180
-                    t_adj = t/2
-                    for box in range(len(boxes)):
-                        theta_range= boxes[box][1]
-                        phi_range= boxes[box][0]
-                        minimum_dB_in_region = lowest_dB_list[box]
-                        writer.writerow([problematic_threshold,
-                                         theta_range, 
-                                         phi_range, 
-                                         ant_num, 
-                                         freq,
-                                         pol,
-                                         fov,
-                                         minimum_dB_in_region,
-                                         ant_max_power,
-                                         (p_adj, t_adj)])
-
+        print(f"    -. Plots include {self.ant_end - self.ant_start + 1} antenna(s), covering antennas {self.ant_start} to {self.ant_end}.")
+        print(f'    -. Saved plots to {self.result_path}/plots') 
+        print(f"    -. Total time spent for this task: {(time.time()-s_time)/60:.2f} minutes.")
     
-    end_time = time.time()
-    running_time = end_time - start_time
-    df = F.process_problematic_region_data(output_path_csv)
+    def detect_(self):
+        """
+        Detects problematic regions in EEP data and saves the results to a CSV file.
 
-    print(f"    -. Saved result to {output_path_csv}")
-    print(f"\nTotal running time: {running_time/60:.2f} minutes")  
+        This function:
+        - Scans processed EEP data.
+        - Identifies regions with EEP values below the `problematic_threshold`.
+        - Saves detected problematic regions to a CSV file.
+
+        Prints:
+            - Progress updates and total time taken.
+        """
+        s_time = time.time()
+        
+        print(f"\nDetecting problematic regions <= {self.problematic_threshold} in the FOV {self.fov}\u00B0")
+        print(f"    -. Result included {self.ant_end - self.ant_start +1} antenna/antennas, including antenna {self.ant_start} to {self.ant_end}")
+        
+        with open(self.output_path_csv, 'w') as f:
+            writer = csv.writer(f)
+            writer.writerow(['class','theta_range', 'phi_range', 'antenna', 'freq.', 'pol.', 'FOV',
+                             'minimum_dB_in_region', 'ant_max_power', 'max_power_coords_in_fov'])
+            e_norm_files = [os.listdir(f"{self.result_path}/e_norms")][0]
+          
+            for file_ in e_norm_files:
+                if file_.endswith('enorm.mat'):
+                    freq, pol = F.match_freq_pol(file_)
+                    e_norm = F.process_e_norm(f"{self.result_path}/e_norms", file_, self.fov, ant_start=self.ant_start, ant_end=self.ant_end)
+                    PR_container = F.detect_bad_pattern(e_norm, problematic_threshold=self.problematic_threshold) 
+
+                    PRs = F.identify_phi_edges(PR_container)
+                    for antenna in range(len(PRs)):
+                        ant_num = antenna+self.ant_start
+                        boxes = F.calculate_phi_theta_ranges(PRs[antenna], PR_container[antenna])
+                        lowest_dB_list = F.get_minimum_power_dB(PRs[antenna], PR_container[antenna])
+                        ant_max_power = e_norm[antenna].max().max()
+
+                        p, t= divmod(e_norm[antenna].values.argmax(), e_norm[antenna].shape[1])
+                        p_adj = (p / 2) - 180
+                        t_adj = t/2
+                        for box in range(len(boxes)):
+                            theta_range= boxes[box][1]
+                            phi_range= boxes[box][0]
+                            minimum_dB_in_region = lowest_dB_list[box]
+                            writer.writerow([self.problematic_threshold,
+                                             theta_range, 
+                                             phi_range, 
+                                             ant_num, 
+                                             freq,
+                                             pol,
+                                             self.fov,
+                                             minimum_dB_in_region,
+                                             ant_max_power,
+                                             (t_adj, p_adj)])
+
+
+     
+        df = F.process_problematic_region_data(self.output_path_csv)
+        print(f"    -. Saved result to {self.output_path_csv}")
+        print(f"    -. Total time spent for this task: {(time.time()-s_time)/60:.2f} minutes.")
 
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Detect problematic regions for antennas within an array layout')
-    parser.add_argument('--fov', type=int, default=45, help='Field of view (0-90 degrees, default: 45)')
-    parser.add_argument('--FEKO_SOURCE_PATH', type=str, help='Path to FEKO .mat files')
-    parser.add_argument('--SAVE_PATH', type=str, help='Path to an existing directory where results will be saved')
-    parser.add_argument('--problematic_threshold', type=float, default=-3, help='Problematic threshold in dB (default: -3)')
-    parser.add_argument('--ant_start', type=int, default=1, help='Start antenna number (default: 1)')
-    parser.add_argument('--ant_end', type=int, default=256, help='End antenna number (default: 256)')
-    
+    parser = argparse.ArgumentParser(description="Detect problematic regions for antennas within an array layout")
+    parser.add_argument("--fov", type=int, default=45, help="Field of view (0-90 degrees, default: 45)")
+    parser.add_argument("--FEKO_SOURCE_PATH", type=str, required=True, help="Path to FEKO .mat files")
+    parser.add_argument("--SAVE_PATH", type=str, required=True, help="Path to an existing directory where results will be saved")
+    parser.add_argument("--problematic_threshold", type=float, default=-3, help="Problematic threshold in dB (default: -3)")
+    parser.add_argument("--ant_start", type=int, default=1, help="Start antenna number (default: 1)")
+    parser.add_argument("--ant_end", type=int, default=256, help="End antenna number (default: 256) of interest")
+    parser.add_argument("--compute_enorms", action="store_true", help="Flag to compute and store E-norms (default: False)")
+
     args = parser.parse_args()
-    main(args.fov, args.FEKO_SOURCE_PATH, args.SAVE_PATH, args.problematic_threshold, args.ant_start, args.ant_end)
+
+    # Create an instance of the processor
+    processor = EEPProblematicRegionProcessor(fov=args.fov,
+                                              FEKO_SOURCE_PATH=args.FEKO_SOURCE_PATH,
+                                              SAVE_PATH=args.SAVE_PATH,
+                                              problematic_threshold=args.problematic_threshold,
+                                              ant_start=args.ant_start,
+                                              ant_end=args.ant_end)
+
+    # Conditionally compute and store E-norms
+    if args.compute_enorms:
+        processor.compute_and_store_e_norms()
+
+    # Always execute plotting and detection
+    processor.plot_()
+    processor.detect_()
