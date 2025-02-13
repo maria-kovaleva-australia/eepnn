@@ -78,34 +78,49 @@ The program assumes that the input data is a `.mat` file containing the followin
 
 ## Output
 - **Normalized EEP values** are stored in `<SAVE_PATH>/e_norms/`
-- **Plots** are saved in `<SAVE_PATH>/plots/`
+- **Plots** are saved in `<SAVE_PATH>/plots/`.
 
-Below are some example output images:
+  Below are some example output images, where the cross marks the maximum power location. Regions with power above the problematic threshold are shown in white, while all other areas follow the colorbar scale.
 
-<p align="center">
-  <img src="eepnn/Problematic_Region_Detector_Files/example_results/100MHz_Ypol_#50_-1.0dB.png" alt="EEPs @100MHz, antenna \#50, Ypol, threshold is -1dB" width="45%">
-  <img src="eepnn/Problematic_Region_Detector_Files/example_results/112.5MHz_Ypol_#2_-1.0dB.png" alt="EEPs @112.5MHz, antenna \#2, Ypol, threshold is -1dB" width="45%">
-</p>
+  <p align="center">
+    <img src="eepnn/Problematic_Region_Detector_Files/example_results/100MHz_Ypol_#50_-1.0dB.png" 
+         alt="EEPs @100MHz, antenna #50, Ypol, threshold is -1dB" width="45%">
+    <img src="eepnn/Problematic_Region_Detector_Files/example_results/112.5MHz_Ypol_#2_-1.0dB.png" 
+         alt="EEPs @112.5MHz, antenna #2, Ypol, threshold is -1dB" width="45%">
+  </p>
 
-<p align="center">
-  <img src="eepnn/Problematic_Region_Detector_Files/example_results/118.75MHz_Xpol_#2_-1.0dB.png" alt="EEPs @118.75MHz, antenna \#2, Xpol, threshold is -1dB" width="45%">
-  <img src="eepnn/Problematic_Region_Detector_Files/example_results/306.25MHz_Xpol_#1_-3.0dB.png" alt="EEPs @306.25MHz, antenna \#1, Xpol, threshold is -3dB" width="45%">
-</p>
+  <p align="center">
+    <img src="eepnn/Problematic_Region_Detector_Files/example_results/118.75MHz_Xpol_#2_-1.0dB.png" 
+         alt="EEPs @118.75MHz, antenna #2, Xpol, threshold is -1dB" width="45%">
+    <img src="eepnn/Problematic_Region_Detector_Files/example_results/306.25MHz_Xpol_#1_-3.0dB.png" 
+         alt="EEPs @306.25MHz, antenna #1, Xpol, threshold is -3dB" width="45%">
+  </p>
 
+- **Detected problematic regions** are recorded in a CSV file inside `<SAVE_PATH>/result/`.
 
-- **Detected problematic regions** are recorded in a CSV file inside `<SAVE_PATH>/result/`
+  Here’s an example of the contents from `problematic_regions-6.0_fov45_1739422068.2191732.csv`. 
 
-Here’s an example of the contents from `problematic_regions-2.0_fov45_1739422068.2191732.csv`:
+  | threshold | theta_range       | phi_range         | antenna | freq. | pol. | FOV | minimum_dB_in_region | ant_max_power |         max_power_coords_in_fov |
+  |-----------|------------------|-------------------|---------|-------|------|-----|----------------------|--------------|-------------------------|
+  | -6.0      | [45.0, 45.0]      | [-173.5, -173.0]  | 30      | 100   | X    | 45  | -6.0127              | 0.0          | (30.5, 60.0)            |
+  | -6.0      | [34.5, 45.0]      | [-143.0, -131.5]  | 30      | 100   | X    | 45  | -7.1332              | 0.0          | (30.5, 60.0)            |
+  | -6.0      | [36.5, 45.0]      | [-180.0, -162.0]  | 31      | 100   | X    | 45  | -8.0220              | 0.0          | (19.5, -65.5)           |
 
-| threshold | theta_range      | phi_range         | antenna | freq. | pol. | FOV | minimum_dB_in_region | ant_max_power | max_power_coords_in_fov |
-|-----------|-----------------|-------------------|---------|-------|------|-----|----------------------|--------------|-------------------------|
-| -6.0      | [45.0, 45.0]     | [-173.5, -173.0]  | 30      | 100   | X    | 45  | -6.012743428238610   | 0.0          | (30.5, 60.0)            |
-| -6.0      | [34.5, 45.0]     | [-143.0, -131.5]  | 30      | 100   | X    | 45  | -7.133155183420730   | 0.0          | (30.5, 60.0)            |
-| -6.0      | [45.0, 45.0]     | [-54.5, -49.0]    | 30      | 100   | X    | 45  | -6.0789728814864900  | 0.0          | (30.5, 60.0)            |
-| -6.0      | [45.0, 45.0]     | [-27.5, -20.0]    | 30      | 100   | X    | 45  | -6.092158493526420   | 0.0          | (30.5, 60.0)            |
-| -6.0      | [44.5, 45.0]     | [-18.0, -14.0]    | 30      | 100   | X    | 45  | -6.042276455560960   | 0.0          | (30.5, 60.0)            |
-| -6.0      | [36.5, 45.0]     | [-180.0, -162.0]  | 31      | 100   | X    | 45  | -8.021958349762780   | 0.0          | (19.5, -65.5)           |
- 
+### Column Descriptions:
+
+| Column                  | Description |
+|-------------------------|-------------|
+| **threshold**           | The power threshold (in dB) used to identify problematic regions. |
+| **theta_range**         | The range of theta (elevation) angles where issues were detected. |
+| **phi_range**           | The range of phi (azimuth) angles where issues were detected. |
+| **antenna**             | The antenna index where the problematic region was found. |
+| **freq.**               | The frequency (in MHz) at which the issue was detected. |
+| **pol.**                | The polarization (X or Y) of the signal. |
+| **FOV**                 | The field of view (in degrees) considered for the analysis. |
+| **minimum_dB_in_region** | The minimum power level (in dB) recorded within the problematic region. |
+| **ant_max_power**       | The maximum power detected at the antenna within the problematic region. |
+| **max_power_coords_in_fov** | The coordinates (theta, phi) where the maximum power was observed within the field of view. |
+
 
 ## Example Workflow
 1. **Compute and save E-norms, plot and save EEPs and output csv file:**
