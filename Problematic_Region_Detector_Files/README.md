@@ -72,7 +72,7 @@ python3 eepnn/Problematic_Region_Detector_Files/codes/detect.py \
 - The first time you run the program for the same batch of data, you **must** set `--compute_enorms 1`, as plotting and problematic region detection rely on the computed E-norms.
 - If you're processing multiple regions of interest, set `--compute_enorms 0` after the initial run to prevent repeated E-norm calculations.
 
-Running the Demo Notebook:
+### Running the Demo Notebook:
 
 In addition to the detection script, you can run the `demo.ipynb` notebook to for immediate useage.
 
