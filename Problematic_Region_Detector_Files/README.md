@@ -108,18 +108,18 @@ The program assumes that the input data is a `.mat` file containing the followin
 
 ### Column Descriptions:
 
-| Column                  | Description |
-|-------------------------|-------------|
-| **threshold**           | The power threshold (in dB) used to identify problematic regions. |
-| **theta_range**         | The range of theta (elevation) angles where issues were detected. |
-| **phi_range**           | The range of phi (azimuth) angles where issues were detected. |
-| **antenna**             | The antenna index where the problematic region was found. |
-| **freq.**               | The frequency (in MHz) at which the issue was detected. |
-| **pol.**                | The polarization (X or Y) of the signal. |
-| **FOV**                 | The field of view (in degrees) considered for the analysis. |
-| **minimum_dB_in_region** | The minimum power level (in dB) recorded within the problematic region. |
-| **ant_max_power**       | The maximum power detected at the antenna within the problematic region. |
-| **max_power_coords_in_fov** | The coordinates (theta, phi) where the maximum power was observed within the field of view. |
+    | Column                  | Description |
+    |-------------------------|-------------|
+    | **threshold**           | The power threshold (in dB) used to identify problematic regions. |
+    | **theta_range**         | The range of theta (elevation) angles where issues were detected. |
+    | **phi_range**           | The range of phi (azimuth) angles where issues were detected. |
+    | **antenna**             | The antenna index where the problematic region was found. |
+    | **freq.**               | The frequency (in MHz) at which the issue was detected. |
+    | **pol.**                | The polarization (X or Y) of the signal. |
+    | **FOV**                 | The field of view (in degrees) considered for the analysis. |
+    | **minimum_dB_in_region** | The minimum power level (in dB) recorded within the problematic region. |
+    | **ant_max_power**       | The maximum power detected at the antenna within the problematic region. |
+    | **max_power_coords_in_fov** | The coordinates (theta, phi) where the maximum power was observed within the field of view. |
 
 
 ## Example Workflow
