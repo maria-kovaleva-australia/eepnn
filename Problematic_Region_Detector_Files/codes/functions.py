@@ -9,6 +9,7 @@ import math
 from math import asin, degrees, sqrt
 import csv
 import warnings
+from tqdm import tqdm
 warnings.filterwarnings("ignore", message="The input coordinates to pcolormesh.*")
 
 
@@ -21,30 +22,38 @@ def match_freq_pol(file_name):
         # pol = 0 if pol == 'X' else 1
     return frequency, pol
 
-def count_e_tot(dim1, dim2, dim3, input_mat_file):
-    E_total= np.zeros((dim1, dim2, dim3), dtype=float)
-    E_phi = input_mat_file['Ephi']
-    E_theta = input_mat_file['Etheta']
-    E_total= np.sqrt(np.abs(E_phi)**2 + np.abs(E_theta)**2)
-    return E_total
+# def count_e_tot(dim1, dim2, dim3, input_mat_file):
+#     E_total= np.zeros((dim1, dim2, dim3), dtype=float)
+#     E_phi = input_mat_file['Ephi']
+#     E_theta = input_mat_file['Etheta']
+#     E_total= np.sqrt(np.abs(E_phi)**2 + np.abs(E_theta)**2)
+#     return E_total
 
-def count_e_norm(dim1, dim2, dim3,e_tot):
-    E_total_max_matrix = np.zeros((dim1,dim2, dim3), dtype = float)
-    E_norm = np.zeros((dim1, dim2, dim3), dtype=float)
-    for antenna in range(dim3):
-        E_total_vector_of_antenna = e_tot[:,:,antenna]
-        e_tot_m = np.max(np.max(E_total_vector_of_antenna))
-        E_total_max_matrix[:,:,antenna] = e_tot_m
-    E_norm = 20 * np.log10(e_tot/ E_total_max_matrix)
+def count_e_tot(dim1, dim2, dim3, E_phi, E_theta):
+    return np.sqrt(np.abs(E_phi)**2 + np.abs(E_theta)**2)
+
+# def count_e_norm(dim1, dim2, dim3,e_tot):
+#     E_total_max_matrix = np.zeros((dim1,dim2, dim3), dtype = float)
+#     E_norm = np.zeros((dim1, dim2, dim3), dtype=float)
+#     for antenna in range(dim3):
+#         E_total_vector_of_antenna = e_tot[:,:,antenna]
+#         e_tot_m = np.max(np.max(E_total_vector_of_antenna))
+#         E_total_max_matrix[:,:,antenna] = e_tot_m
+#     E_norm = 20 * np.log10(e_tot/ E_total_max_matrix)
+#     return E_norm
+
+def count_e_norm(dim1, dim2, dim3, e_tot):
+    E_total_max_matrix = np.max(e_tot, axis=(0, 1))  # Max across the first two dimensions (dim1, dim2)
+    E_norm = 20 * np.log10(e_tot / E_total_max_matrix)  # Normalize in-place
     return E_norm
 
-
 def detect_shape_of_data(source_files, starstwith='FEKO', ant_start=1, ant_end=256):
+    
     files = os.listdir(source_files)
-    # print("os.listdir()", files)
     mat_files = [file for file in files if file.endswith('.mat') and file.startswith(starstwith)]
-    dim1, dim2, dim3 = loadmat(f'{source_files}/{mat_files[0]}')['Ephi'].shape
-    # print("#\n# Detecting shape of data...")
+    data = loadmat(f'{source_files}/{mat_files[0]}', variable_names=['Ephi'])
+    dim1, dim2, dim3 = data['Ephi'].shape
+    
     print(f"    -. Number of ϕ angles: {dim1}, Number of θ angles: {dim2}, Total antennas: {dim3}")
     
     if ant_end > dim3:
@@ -56,21 +65,18 @@ def detect_shape_of_data(source_files, starstwith='FEKO', ant_start=1, ant_end=2
     return dim1, dim2, dim3
     
     
-def cal_and_save_e_nrom(dim1, dim2, dim3, source_files, save_path,starstwith='FEKO'):
+def cal_and_save_e_norm(dim1, dim2, dim3, source_files, save_path,starstwith='FEKO'):
     os.makedirs(save_path, exist_ok=True)
     enorm_list =[]
     files = os.listdir(source_files)
-    # print("os.listdir()", files)
     mat_files = [file for file in files if file.endswith('.mat') and file.startswith(starstwith)]
-    # name = None
     os.makedirs(f'{save_path}/e_norms', exist_ok=True)
-
-    for file in mat_files:
-        # print(f'Processing {file}')
+    
+    for file in tqdm(mat_files, desc="    -. Progress: ", unit="file"):
+    # for file in mat_files:
         try:
-            # print(f"loading {source_files}/{file}...")
-            mat_file = loadmat(f'{source_files}/{file}')
-            e_tot = count_e_tot(dim1, dim2, dim3, mat_file)
+            mat_file = loadmat(f'{source_files}/{file}', variable_names=['Ephi','Etheta'])
+            e_tot = count_e_tot(dim1, dim2, dim3, mat_file['Ephi'], mat_file['Etheta'])
             e_norm = count_e_norm(dim1, dim2, dim3, e_tot)
 
             pattern = r'\d+(\.\d+)?MHz_[XY]pol'
@@ -79,37 +85,39 @@ def cal_and_save_e_nrom(dim1, dim2, dim3, source_files, save_path,starstwith='FE
 
             savemat(save_to, {'e_norm': e_norm})
             enorm_list.append(e_norm)
-            # print(f'saved e_norm to {save_to}')
-            # os.remove(f'{source_files}/{file}')
         except ValueError as err:
             print(f'{err} at {file}')
     
     return enorm_list
 
-
-def process_xpol(antenna_data, theta_range,ant):
+def process_xpol(antenna_data, theta_range, ant):
     """Processes data for Xpol files."""
-    df_0_180 = pd.DataFrame(antenna_data[:360, :theta_range + 1,ant])  # phi 0-179.5 degrees
-    df_180_360 = pd.DataFrame(antenna_data[360:, :theta_range + 1,ant])  # phi 180-360 degrees
-    return pd.concat([df_180_360, df_0_180]).reset_index(drop=True)
-
-def process_ypol(antenna_data, theta_range,ant):
-    """Processes data for Ypol files."""
-    df_0_180 = pd.DataFrame(antenna_data[180:540, :theta_range + 1,ant])  #phi  0-179.5 degrees
-    df_180_270 = pd.DataFrame(antenna_data[540:, :theta_range + 1,ant])  # phi 180-270 degrees
-    df_270_360 = pd.DataFrame(antenna_data[0:180, :theta_range + 1,ant])  # phi 270-360 degrees
+    # Using numpy arrays directly instead of pandas DataFrames
+    data_0_180 = antenna_data[:360, :theta_range + 1, ant]  # phi 0-179.5 degrees
+    data_180_360 = antenna_data[360:, :theta_range + 1, ant]  # phi 180-360 degrees
     
-    # phi -180 on the 1st row of the data frame as the contour plot plots the 1st row data on the bottom, by doing this filpping make sure phi 180 on the top. 
-    df_180_360 = pd.concat([df_180_270, df_270_360])
-    return pd.concat([df_180_360, df_0_180]).reset_index(drop=True)
+    # Concatenate the arrays (flip order to ensure 180 is on top)
+    return np.concatenate((data_180_360, data_0_180), axis=0)
 
-def process_e_norm(e_norm_path, e_norm_filename, fov, ant_start=1, ant_end=256): # e_norm_path='/data/curtin_eepnn/P_vogel_FEKO/enorms/E'
+def process_ypol(antenna_data, theta_range, ant):
+    """Processes data for Ypol files."""
+    # Using numpy arrays directly instead of pandas DataFrames
+    data_0_180 = antenna_data[180:540, :theta_range + 1, ant]  # phi 0-179.5 degrees
+    data_180_270 = antenna_data[540:, :theta_range + 1, ant]  # phi 180-270 degrees
+    data_270_360 = antenna_data[0:180, :theta_range + 1, ant]  # phi 270-360 degrees
+    
+    # Concatenate and reorder the arrays for proper contour plot representation
+    data_180_360 = np.concatenate((data_180_270, data_270_360), axis=0)
+    return np.concatenate((data_180_360, data_0_180), axis=0)
+
+
+def process_e_norm(e_norm_path, e_norm_filename, fov, ant_start=1, ant_end=256):
     """
     Loads and processes e_norm data from a .mat file.
 
     This function reads an e_norm .mat file, extracts and rearranges the data for 
-    either X-pol or Y-pol polarization, and returns a list of DataFrames, where 
-    each DataFrame corresponds to the data for a specific antenna.
+    either X-pol or Y-pol polarization, and returns a list of arrays, where 
+    each array corresponds to the data for a specific antenna.
 
     Parameters:
     ----------
@@ -133,11 +141,11 @@ def process_e_norm(e_norm_path, e_norm_filename, fov, ant_start=1, ant_end=256):
 
     Returns:
     -------
-    list of pandas.DataFrame
-        A list of DataFrames where each DataFrame contains the processed e_norm 
+    list of np.array
+        A list of arrays where each array contains the processed e_norm 
         data for one antenna. The data is reorganized to match the desired angular 
-        range and order. Row index indicates the ϕ angle, whereas column names represent 
-        the θ angle.
+        range and order. The rows represent ϕ (phi) angles, and the columns represent 
+        θ (theta) angles.
     """
     # Define the angular ranges
     x_range = np.arange(0, fov + 0.5, 0.5)
@@ -145,14 +153,12 @@ def process_e_norm(e_norm_path, e_norm_filename, fov, ant_start=1, ant_end=256):
     
     # Load e_norm data
     if e_norm_path:
-        # print(f"Fetching e_norm data from {e_norm_path}/{e_norm_filename}...")
         e_norm = loadmat(f'{e_norm_path}/{e_norm_filename}')['e_norm']
     else:
-        # print(f"Loading {e_norm_filename}...")
         e_norm = loadmat(e_norm_filename)['e_norm']
     
-    # Initialize the list of DataFrames to store results
-    dfs = []
+    # Initialize the list of arrays to store results
+    results = []
     ant_start_idx = ant_start - 1  # Adjust for 0-based indexing
     
     # Scenario 1: When user wants to select a single antenna
@@ -166,25 +172,26 @@ def process_e_norm(e_norm_path, e_norm_filename, fov, ant_start=1, ant_end=256):
     # Process data for each antenna in the selected range
     for antenna in antennas:
         if e_norm_filename.endswith('Xpol_enorm.mat'):
-            df = process_xpol(e_norm, theta_range, antenna)
+            result = process_xpol(e_norm, theta_range, antenna)
         elif e_norm_filename.endswith('Ypol_enorm.mat'):
-            df = process_ypol(e_norm, theta_range, antenna)
-        dfs.append(df)
-    return dfs
+            result = process_ypol(e_norm, theta_range, antenna)
+        results.append(result)
+    
+    return results
 
 
-def detect_bad_pattern(dfs, problematic_threshold = -3):
+def detect_bad_pattern(results, problematic_threshold=-3):
     """
-    Detects problematic patterns in a list of DataFrames based on threshold values.
+    Detects problematic patterns in a list of arrays based on threshold values.
 
-    This function iterates through a list of DataFrames, identifying entries that fall below
+    This function iterates through a list of arrays, identifying entries that fall below
     specific thresholds (-6dB < e_norm <= problematic_threshold). For each threshold, the function collects the
     row index, column index, and corresponding value for problematic entries.
     
     Parameters:
     ----------
-    dfs : list of pandas.DataFrame
-        A list of DataFrames representing data from 256 antennas. Each DataFrame should have
+    results : list of np.array
+        A list of arrays representing data from 256 antennas. Each array should have
         numerical values and a consistent shape (721*181).
     
     Returns:
@@ -193,18 +200,20 @@ def detect_bad_pattern(dfs, problematic_threshold = -3):
         - PRC_ALL : list of lists
           Contains tuples of (ϕ,θ,e_norm) for entries ≤ -3.
     """
-    PRC_ALL = [] # initilized Problematic Regions Container for all PR over 256 antenna at all avilable frequencies.
+    PRC_ALL = []  # Initialize the list to hold all problematic regions
 
-    for antenna in range(len(dfs)):
-        # print(dfs[antenna].shape)
-        df = dfs[antenna]
+    for antenna in range(len(results)):
+        result = results[antenna]
         pcr_ant = []
-        for index, row in df.iterrows():
-              for theta in range(df.shape[1]):
-                    if row[theta] <= problematic_threshold:
-                        pcr_ant.append((index, theta, df.loc[index, theta]))
+        # Iterate through the array for each φ and θ
+        for phi in range(result.shape[0]):  # Rows represent φ (phi)
+            for theta in range(result.shape[1]):  # Columns represent θ (theta)
+                if result[phi, theta] <= problematic_threshold:
+                    pcr_ant.append((phi, theta, result[phi, theta]))  # Store (φ, θ, e_norm)
         PRC_ALL.append(pcr_ant)
+    
     return PRC_ALL
+
 
 def identify_phi_edges(problematic_data):
     """
@@ -232,12 +241,12 @@ def identify_phi_edges(problematic_data):
     for antenna in problematic_data:
         if antenna:
             temp = [[antenna[0]]]  # Start a new group with the first problematic point
-            # print(f"temp :  {temp}")
+          
             for index in range(len(antenna) - 1):
-                # print(index)
+              
                 current = antenna[index]
                 next_ = antenna[index + 1]
-
+                
                 # Check if the φ difference exceeds 1 (indicating a new group)
                 if next_[0] - current[0] > 1:
                     temp[-1].append(current)  # Close the current group
@@ -316,21 +325,6 @@ def get_minimum_power_dB(file, problematic_file):
         min_dB_list.append(min_dB)
     return min_dB_list
 
-# def transform_str_to_float(string):
-#     numbers = string.strip('[]').split(',')
-#     float_numbers = [float(num.strip()) for num in numbers]
-#     return float_numbers
-
-# def process_problematic_region_data(file_path):
-#     df = pd.read_csv(file_path)
-#     df['theta_range'] = df['theta_range'].apply(lambda x: transform_str_to_float(x))
-#     df['phi_range'] = df['phi_range'].apply(lambda x: transform_str_to_float(x))
-#     df['minimum_dB_in_region'] = df['minimum_dB_in_region'].apply(lambda x: float(x))
-#     df['theta_left'] = df['theta_range'].apply(lambda x: x[0])
-#     # print(df.shape)
-#     # print(df['theta_left'])
-#     return df
-
 def plot_2d_eep(filename, fov, output_path=None, enorm_path= None, problematic_threshold=None):
     x_range = np.arange(0, fov +0.5, 0.5)
     y_range = np.arange(-180, 180.5, 0.5)
@@ -343,14 +337,14 @@ def plot_2d_eep(filename, fov, output_path=None, enorm_path= None, problematic_t
     # print(f"shape of enorm, {e_norm.shape}, total antenna number is {ant_num}")
     for antenna in range(ant_num):
         if filename.endswith('Xpol_enorm.mat'):
-            df=process_xpol(e_norm, theta_range,antenna)
+            arr=process_xpol(e_norm, theta_range,antenna)
         elif filename.endswith('Ypol_enorm.mat'):
-            df=process_ypol(e_norm, theta_range,antenna)
+            arr=process_ypol(e_norm, theta_range,antenna)
 
-        locat = np.unravel_index(np.argmax(df), df.shape)
+        locat = np.unravel_index(np.argmax(arr), arr.shape)
         plt.scatter(locat[1]/2, (locat[0] / 2)-180, c="gray", marker='+', s=80, linewidths=1.5)
         # print((locat[0] / 2)-180,locat[1]/2 )
-        plt.imshow(df, aspect = 'auto', extent=[0,90,-180,180], alpha = 1, origin = "lower", cmap= 'viridis')
+        plt.imshow(arr, aspect = 'auto', extent=[0,90,-180,180], alpha = 1, origin = "lower", cmap= 'viridis')
         plt.colorbar()
         
         # Set labels and title
@@ -368,10 +362,12 @@ def plot_2d_eep(filename, fov, output_path=None, enorm_path= None, problematic_t
 
 
 def get_kx_ky(FEKO_data_path):
-    all_mat= os.listdir(FEKO_data_path)
-    data = loadmat(f"{FEKO_data_path}/{all_mat[0]}")
+    # all_mat= os.listdir(FEKO_data_path)
+    all_mat = [file for file in os.listdir(FEKO_data_path) if file.endswith('.mat')]
+    # Load the .mat file once
+    data = loadmat(f"{FEKO_data_path}/{all_mat[0]}", variable_names=['kx', 'ky'])
     return data['kx'], data['ky'] 
-        
+
 def plot_uv_plane(eep, kx, ky, freq, pol, antenna, problematic_threshold, locat):
     mesh = plt.pcolormesh(kx, ky, eep, shading='nearest', cmap='viridis', vmin=np.min(eep), vmax=problematic_threshold)  # Heatmap shading='auto'
     mesh.set_clim(np.min(eep), problematic_threshold)
@@ -424,19 +420,21 @@ def plot_max_power_location(locat):
                  ha='left',
                  va='top')
     
-def plot_polar_coor(X,Y, locat, df, problematic_threshold,freq, pol, antenna):
-    levels = sorted([min(df.values.flatten()), problematic_threshold-10, problematic_threshold-5, problematic_threshold])
-    contour_plot = plt.contourf(X, Y, df.values,levels=levels,cmap= 'viridis',vmin =problematic_threshold-20) #vmin =-12 Spectral viridis
-    c = plt.contour(X, Y, df.values,levels, linestyles='dashed', colors = 'k', alpha = .8)
-    plt.clabel(c, inline=True, fontsize=8, colors = 'k')
+def plot_polar_coor(X, Y, locat, arr, problematic_threshold, freq, pol, antenna):
+    levels = sorted([min(arr.flatten()), problematic_threshold - 10, problematic_threshold - 5, problematic_threshold])
+    contour_plot = plt.contourf(X, Y, arr, levels=levels, cmap='viridis', vmin=problematic_threshold - 20)  # Use arr directly as it's a numpy array
+    c = plt.contour(X, Y, arr, levels, linestyles='dashed', colors='k', alpha=.8)
+    plt.clabel(c, inline=True, fontsize=8, colors='k')
     colorbar = plt.colorbar(contour_plot, label='Normalised power (dB)')
     plot_max_power_location(locat)
 
+    # Set title and labels
     title = f"{freq}MHz in {pol}pol, antenna #{antenna}"
     plt.title(title)
     plt.xlabel('(θ deg)')
     plt.ylabel('(φ deg)')
     plt.grid()
+
         
 
 def add_phi0_coor(pol):
@@ -483,15 +481,15 @@ def plot_it(enorm_folder, e_norm_filename, kx, ky, output_path, problematic_thre
     ########################### plotting ####################
     for antenna in antennas:
         if e_norm_filename.endswith('Xpol_enorm.mat'):
-            df=process_xpol(e_norm, theta_range,antenna)
+            arr=process_xpol(e_norm, theta_range,antenna)
         elif e_norm_filename.endswith('Ypol_enorm.mat'):
-            df=process_ypol(e_norm, theta_range,antenna)
-        
+            arr=process_ypol(e_norm, theta_range,antenna)
+   
         # Plot the contour
-        locat = np.unravel_index(np.argmax(df), df.shape)
+        locat = np.unravel_index(np.argmax(arr), arr.shape)
         plt.figure(figsize = (13,5))
         plt.subplot(121)
-        plot_polar_coor(X,Y, locat, df, problematic_threshold,freq, pol, antenna+1)
+        plot_polar_coor(X,Y, locat, arr, problematic_threshold,freq, pol, antenna+1)
         
         # plot uv
         plt.subplot(122)

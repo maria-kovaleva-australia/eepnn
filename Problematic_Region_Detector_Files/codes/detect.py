@@ -4,6 +4,7 @@ import time
 import csv
 import os
 import argparse
+from tqdm import tqdm
 
 
 ################ Cal and save e norm #################
@@ -70,7 +71,7 @@ class EEPProblematicRegionProcessor:
         s_time = time.time()
         print(f"Calculating EEPs in logarithmic scale...\n")
         dim1, dim2, dim3 = F.detect_shape_of_data(self.FEKO_SOURCE_PATH, ant_start=self.ant_start, ant_end=self.ant_end)
-        F.cal_and_save_e_nrom(dim1, dim2, dim3, self.FEKO_SOURCE_PATH, self.result_path)
+        F.cal_and_save_e_norm(dim1, dim2, dim3, self.FEKO_SOURCE_PATH, self.result_path)
         print(f'    -. Saved e_norm to {self.result_path}/e_norms')
   
          # Adapt to the actual last antenna
@@ -96,15 +97,15 @@ class EEPProblematicRegionProcessor:
         print(f"\nPlotting EEPs in polar coordinate and uv plane...\n")
         
         kx, ky = F.get_kx_ky(self.FEKO_SOURCE_PATH)
-        e_norm_files = [os.listdir(f"{self.result_path}/e_norms")][0]
-        for file_ in e_norm_files:
-            if file_.endswith('enorm.mat'):
-                F.plot_it(f"{self.result_path}/e_norms", 
-                          file_, 
-                          kx, ky, 
-                          output_path=self.result_path, 
-                          problematic_threshold=self.problematic_threshold, 
-                          ant_start=self.ant_start, ant_end=self.ant_end)
+        e_norm_files = [f for f in os.listdir(f"{self.result_path}/e_norms") if f.endswith('enorm.mat')]
+
+        for file_ in tqdm(e_norm_files, desc="    -. Progress: ", unit="file"):
+            F.plot_it(f"{self.result_path}/e_norms", 
+                      file_, 
+                      kx, ky, 
+                      output_path=self.result_path, 
+                      problematic_threshold=self.problematic_threshold, 
+                      ant_start=self.ant_start, ant_end=self.ant_end)
 
         print(f"    -. Plots include {self.ant_end - self.ant_start + 1} antenna(s), covering antennas {self.ant_start} to {self.ant_end}.")
         print(f'    -. Saved plots to {self.result_path}/plots') 
@@ -131,10 +132,10 @@ class EEPProblematicRegionProcessor:
             writer = csv.writer(f)
             writer.writerow(['class','theta_range', 'phi_range', 'antenna', 'freq.', 'pol.', 'FOV',
                              'minimum_dB_in_region', 'ant_max_power', 'max_power_coords_in_fov'])
-            e_norm_files = [os.listdir(f"{self.result_path}/e_norms")][0]
-          
-            for file_ in e_norm_files:
-                if file_.endswith('enorm.mat'):
+             
+            e_norm_files = [f for f in os.listdir(f"{self.result_path}/e_norms") if f.endswith('enorm.mat')]
+            
+            for file_ in tqdm(e_norm_files, desc="    -. Progress: ", unit="file"):
                     freq, pol = F.match_freq_pol(file_)
                     e_norm = F.process_e_norm(f"{self.result_path}/e_norms", file_, self.fov, ant_start=self.ant_start, ant_end=self.ant_end)
                     PR_container = F.detect_bad_pattern(e_norm, problematic_threshold=self.problematic_threshold) 
@@ -146,7 +147,7 @@ class EEPProblematicRegionProcessor:
                         lowest_dB_list = F.get_minimum_power_dB(PRs[antenna], PR_container[antenna])
                         ant_max_power = e_norm[antenna].max().max()
 
-                        p, t= divmod(e_norm[antenna].values.argmax(), e_norm[antenna].shape[1])
+                        p, t= divmod(e_norm[antenna].argmax(), e_norm[antenna].shape[1]) #divmod(e_norm[antenna].values.argmax(), e_norm[antenna].shape[1])
                         p_adj = (p / 2) - 180
                         t_adj = t/2
                         for box in range(len(boxes)):
@@ -164,9 +165,6 @@ class EEPProblematicRegionProcessor:
                                              ant_max_power,
                                              (t_adj, p_adj)])
 
-
-     
-        df = F.process_problematic_region_data(self.output_path_csv)
         print(f"    -. Saved result to {self.output_path_csv}")
         print(f"    -. Total time spent for this task: {(time.time()-s_time)/60:.2f} minutes.")
 
@@ -180,7 +178,10 @@ if __name__ == "__main__":
     parser.add_argument("--problematic_threshold", type=float, default=-3, help="Problematic threshold in dB (default: -3)")
     parser.add_argument("--ant_start", type=int, default=1, help="Start antenna number (default: 1)")
     parser.add_argument("--ant_end", type=int, default=256, help="End antenna number (default: 256) of interest")
-    parser.add_argument("--compute_enorms", action="store_true", help="Flag to compute and store E-norms (default: False)")
+    parser.add_argument("--compute_enorms", type=int, choices=[0, 1], default=0, 
+                        help="Set to 1 to compute and store E-norms, 0 to disable (default: 0)")
+    parser.add_argument("--plot_EEPs", type=int, choices=[0, 1], default=0, 
+                        help="Set to 1 to plot and store EEPs, 0 to disable (default: 0)")
 
     args = parser.parse_args()
 
@@ -192,10 +193,11 @@ if __name__ == "__main__":
                                               ant_start=args.ant_start,
                                               ant_end=args.ant_end)
 
-    # Conditionally compute and store E-norms
+    # Conditionally compute and store E-norms and plot EEPs
     if args.compute_enorms:
         processor.compute_and_store_e_norms()
-
-    # Always execute plotting and detection
-    processor.plot_()
+        
+    if args.plot_EEPs:
+        processor.plot_()
+    
     processor.detect_()
