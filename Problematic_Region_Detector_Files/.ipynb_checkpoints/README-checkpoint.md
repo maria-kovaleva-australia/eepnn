@@ -14,8 +14,9 @@ eepnn/
 │   ├── codes/
 │   │   ├── detect.py            # Main script to process EEP data
 │   │   ├── functions.py         # Contains all necessary functions
-│   ├── demo.ipynb               # Jupyter Notebook for demonstration
+│   │   ├── demo.ipynb           # Jupyter Notebook for demonstration
 │   ├── requirements.txt         # List of required dependencies
+│   ├── example_results          # example outputs
 
 ```
 
@@ -52,16 +53,6 @@ python3 eepnn/Problematic_Region_Detector_Files/codes/detect.py \
     --compute_enorms 1 \
     --plot_EEPs 1
 ```
-⚠️ Important Note:
-
-- The first time you run the program for the same batch of data, you **must** set `--compute_enorms 1`, as plotting and problematic region detection rely on the computed E-norms.
-- If you're processing multiple regions of interest, set `--compute_enorms 0` after the initial run to prevent repeated E-norm calculations.
-
-### Input Data
-The program assumes that the input data is a `.mat` file containing the following fields:
-
-- `Etheta` and `Ephi`: 3D arrays of shape `(721, 181, N)`, where `N` is a variable representing the total number of antennas.
-- `kx` and `ky`: 2D arrays of shape `(721, 181)`.
 
 ### Command-Line Arguments:
 
@@ -76,6 +67,24 @@ The program assumes that the input data is a `.mat` file containing the followin
 | `--compute_enorms`           | Specifies whether to compute and store the **E-norms**(normalised power in logarithmic scale). **Set it to 0 this argument if the E-norms were already calculated and saved in previous runs**. |
 | `--plot_EEPs`                | Specifies whether to plot **EEP** (Embeded Element Pattern) graphs. **Set it to 0 if EEP plots are not required**. |
 
+⚠️ Important Note:
+
+- The first time you run the program for the same batch of data, you **must** set `--compute_enorms 1`, as plotting and problematic region detection rely on the computed E-norms.
+- If you're processing multiple regions of interest, set `--compute_enorms 0` after the initial run to prevent repeated E-norm calculations.
+
+Running the Demo Notebook:
+
+In addition to the detection script, you can run the `demo.ipynb` notebook to for immediate useage.
+
+- Open the `demo.ipynb` notebook in your preferred environment (e.g., Jupyter Notebook, Google Colab, etc.).
+- Follow the instructions within the notebook to run the code and view the outputs.
+
+### Input Data
+The program assumes that the input data is a `.mat` file containing the following fields:
+
+- `Etheta` and `Ephi`: 3D arrays of shape `(721, 181, N)`, where `N` is a variable representing the total number of antennas.
+- `kx` and `ky`: 2D arrays of shape `(721, 181)`.
+
 ## Output
 - **Normalized EEP values** are stored in `<SAVE_PATH>/e_norms/`
 - **Plots** are saved in `<SAVE_PATH>/plots/`.
@@ -84,42 +93,34 @@ The program assumes that the input data is a `.mat` file containing the followin
 
   <p align="center">
     <img src="eepnn/Problematic_Region_Detector_Files/example_results/100MHz_Ypol_#50_-1.0dB.png" 
-         alt="EEPs @100MHz, antenna #50, Ypol, threshold is -1dB" width="45%">
+         alt="EEPs @100MHz, antenna \#50, Ypol, threshold is -1dB" width="45%">
     <img src="eepnn/Problematic_Region_Detector_Files/example_results/112.5MHz_Ypol_#2_-1.0dB.png" 
-         alt="EEPs @112.5MHz, antenna #2, Ypol, threshold is -1dB" width="45%">
+         alt="EEPs @112.5MHz, antenna \#2, Ypol, threshold is -1dB" width="45%">
   </p>
 
   <p align="center">
     <img src="eepnn/Problematic_Region_Detector_Files/example_results/118.75MHz_Xpol_#2_-1.0dB.png" 
-         alt="EEPs @118.75MHz, antenna #2, Xpol, threshold is -1dB" width="45%">
+         alt="EEPs @118.75MHz, antenna \#2, Xpol, threshold is -1dB" width="45%">
     <img src="eepnn/Problematic_Region_Detector_Files/example_results/306.25MHz_Xpol_#1_-3.0dB.png" 
-         alt="EEPs @306.25MHz, antenna #1, Xpol, threshold is -3dB" width="45%">
+         alt="EEPs @306.25MHz, antenna \#1, Xpol, threshold is -3dB" width="45%">
   </p>
 
-- **Detected problematic regions** are recorded in a CSV file inside `<SAVE_PATH>/result/`.
+- **Detected Problematic Regions** are recorded in a CSV file located at `<SAVE_PATH>/result/`.
 
-  Here’s an example of the contents from `problematic_regions-6.0_fov45_1739422068.2191732.csv`. 
+  Here is the column descriptions for the CSV file:
 
-  | threshold | theta_range       | phi_range         | antenna | freq. | pol. | FOV | minimum_dB_in_region | ant_max_power |         max_power_coords_in_fov |
-  |-----------|------------------|-------------------|---------|-------|------|-----|----------------------|--------------|-------------------------|
-  | -6.0      | [45.0, 45.0]      | [-173.5, -173.0]  | 30      | 100   | X    | 45  | -6.0127              | 0.0          | (30.5, 60.0)            |
-  | -6.0      | [34.5, 45.0]      | [-143.0, -131.5]  | 30      | 100   | X    | 45  | -7.1332              | 0.0          | (30.5, 60.0)            |
-  | -6.0      | [36.5, 45.0]      | [-180.0, -162.0]  | 31      | 100   | X    | 45  | -8.0220              | 0.0          | (19.5, -65.5)           |
-
-### Column Descriptions:
-
-| Column                  | Description |
-|-------------------------|-------------|
-| **threshold**           | The power threshold (in dB) used to identify problematic regions. |
-| **theta_range**         | The range of theta (elevation) angles where issues were detected. |
-| **phi_range**           | The range of phi (azimuth) angles where issues were detected. |
-| **antenna**             | The antenna index where the problematic region was found. |
-| **freq.**               | The frequency (in MHz) at which the issue was detected. |
-| **pol.**                | The polarization (X or Y) of the signal. |
-| **FOV**                 | The field of view (in degrees) considered for the analysis. |
-| **minimum_dB_in_region** | The minimum power level (in dB) recorded within the problematic region. |
-| **ant_max_power**       | The maximum power detected at the antenna within the problematic region. |
-| **max_power_coords_in_fov** | The coordinates (theta, phi) where the maximum power was observed within the field of view. |
+  | **Column**                    | **Description** |
+  |-------------------------------|-----------------|
+  | **threshold**                  | The power threshold (in dB) used to identify problematic regions. |
+  | **theta_range**                | The range of theta (elevation) angles where issues were detected. |
+  | **phi_range**                  | The range of phi (azimuth) angles where issues were detected. |
+  | **antenna**                    | The antenna index where the problematic region was found. |
+  | **freq.**                       | The frequency (in MHz) at which the issue was detected. |
+  | **pol.**                        | The polarization (X or Y) of the signal. |
+  | **FOV**                         | The field of view (in degrees) considered for the analysis. |
+  | **minimum_dB_in_region**       | The minimum power level (in dB) recorded within the problematic region. |
+  | **ant_max_power**              | The maximum power detected at the antenna within the problematic region. |
+  | **max_power_coords_in_fov**    | The coordinates (theta, phi) where the maximum power was observed within the field of view. |
 
 
 ## Example Workflow

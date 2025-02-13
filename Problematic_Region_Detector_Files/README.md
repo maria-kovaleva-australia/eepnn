@@ -14,8 +14,9 @@ eepnn/
 │   ├── codes/
 │   │   ├── detect.py            # Main script to process EEP data
 │   │   ├── functions.py         # Contains all necessary functions
-│   ├── demo.ipynb               # Jupyter Notebook for demonstration
+│   │   ├── demo.ipynb           # Jupyter Notebook for demonstration
 │   ├── requirements.txt         # List of required dependencies
+│   ├── example_results          # example outputs
 
 ```
 
@@ -52,16 +53,6 @@ python3 eepnn/Problematic_Region_Detector_Files/codes/detect.py \
     --compute_enorms 1 \
     --plot_EEPs 1
 ```
-⚠️ Important Note:
-
-- The first time you run the program for the same batch of data, you **must** set `--compute_enorms 1`, as plotting and problematic region detection rely on the computed E-norms.
-- If you're processing multiple regions of interest, set `--compute_enorms 0` after the initial run to prevent repeated E-norm calculations.
-
-### Input Data
-The program assumes that the input data is a `.mat` file containing the following fields:
-
-- `Etheta` and `Ephi`: 3D arrays of shape `(721, 181, N)`, where `N` is a variable representing the total number of antennas.
-- `kx` and `ky`: 2D arrays of shape `(721, 181)`.
 
 ### Command-Line Arguments:
 
@@ -75,6 +66,24 @@ The program assumes that the input data is a `.mat` file containing the followin
 | `--ant_end 10`               | Specifies the **ending antenna index** (processes antennas from **1 to 10**). If the input is less than the total number of antennas, it will be automatically adjusted to the maximum antenna number. |
 | `--compute_enorms`           | Specifies whether to compute and store the **E-norms**(normalised power in logarithmic scale). **Set it to 0 this argument if the E-norms were already calculated and saved in previous runs**. |
 | `--plot_EEPs`                | Specifies whether to plot **EEP** (Embeded Element Pattern) graphs. **Set it to 0 if EEP plots are not required**. |
+
+⚠️ Important Note:
+
+- The first time you run the program for the same batch of data, you **must** set `--compute_enorms 1`, as plotting and problematic region detection rely on the computed E-norms.
+- If you're processing multiple regions of interest, set `--compute_enorms 0` after the initial run to prevent repeated E-norm calculations.
+
+Running the Demo Notebook:
+
+In addition to the detection script, you can run the `demo.ipynb` notebook to for immediate useage.
+
+- Open the `demo.ipynb` notebook in your preferred environment (e.g., Jupyter Notebook, Google Colab, etc.).
+- Follow the instructions within the notebook to run the code and view the outputs.
+
+### Input Data
+The program assumes that the input data is a `.mat` file containing the following fields:
+
+- `Etheta` and `Ephi`: 3D arrays of shape `(721, 181, N)`, where `N` is a variable representing the total number of antennas.
+- `kx` and `ky`: 2D arrays of shape `(721, 181)`.
 
 ## Output
 - **Normalized EEP values** are stored in `<SAVE_PATH>/e_norms/`
@@ -98,15 +107,7 @@ The program assumes that the input data is a `.mat` file containing the followin
 
 - **Detected Problematic Regions** are recorded in a CSV file located at `<SAVE_PATH>/result/`.
 
-  Below is an example of the contents for a problematic threshold of -6 dB within the FOV of 45 degrees for antennas 30 and 31:
-
-  | **threshold** | **theta_range**    | **phi_range**      | **antenna** | **freq.** | **pol.** | **FOV** | **minimum_dB_in_region** | **ant_max_power** | **max_power_coords_in_fov** |
-  |---------------|--------------------|--------------------|-------------|-----------|----------|---------|--------------------------|-------------------|-----------------------------|
-  | -6.0          | [45.0, 45.0]        | [-173.5, -173.0]   | 30          | 100       | X        | 45      | -6.0127                 | 0.0               | (30.5, 60.0)               |
-  | -6.0          | [34.5, 45.0]        | [-143.0, -131.5]   | 30          | 100       | X        | 45      | -7.1332                 | 0.0               | (30.5, 60.0)               |
-  | -6.0          | [36.5, 45.0]        | [-180.0, -162.0]   | 31          | 100       | X        | 45      | -8.0220                 | 0.0               | (19.5, -65.5)              |
-
-  ### Column Descriptions:
+  Here is the column descriptions for the CSV file:
 
   | **Column**                    | **Description** |
   |-------------------------------|-----------------|
