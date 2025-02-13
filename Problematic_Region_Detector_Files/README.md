@@ -73,27 +73,42 @@ The program assumes that the input data is a `.mat` file containing the followin
 | `--problematic_threshold -3` | Sets the **problematic threshold** to -3 dB for detecting abnormal regions. This value must be **≤ 0**. |
 | `--ant_start 1`              | Specifies the **starting antenna index** (first antenna is **1**). |
 | `--ant_end 10`               | Specifies the **ending antenna index** (processes antennas from **1 to 10**). If the input is less than the total number of antennas, it will be automatically adjusted to the maximum antenna number. |
-| `--compute_enorms`           | Specifies whether to compute and store the **E-norms**(normalised power in logarithmic scale). **Omit this argument if the E-norms were already calculated and saved in previous runs**. |
-| `--plot_EEPs`                | Specifies whether to plot **EEP** (Embeded Element Pattern) graphs. **Omit this argument if EEP plots are not required**. |### Command-Line Arguments:
-
-| Argument                     | Description |
-|------------------------------|-------------|
-| `--fov 30`                   | Sets the **Field of View (FoV)** to 30 degrees. This value can be modified within the range **[0, 90]**. |
-| `--FEKO_SOURCE_PATH ./`      | Specifies the **source path** where FEKO simulation files are located (default: current directory `./`). |
-| `--SAVE_PATH eepnn`          | Defines the directory (`eepnn`) where output results will be saved by default. |
-| `--problematic_threshold -3` | Sets the **problematic threshold** to -3 dB for detecting abnormal regions. This value must be **≤ 0**. |
-| `--ant_start 1`              | Specifies the **starting antenna index** (first antenna is **1**). |
-| `--ant_end 10`               | Specifies the **ending antenna index** (processes antennas from **1 to 10**). If the input is less than the total number of antennas, it will be automatically adjusted to the maximum antenna number. |
 | `--compute_enorms`           | Specifies whether to compute and store the **E-norms**(normalised power in logarithmic scale). **Set it to 0 this argument if the E-norms were already calculated and saved in previous runs**. |
 | `--plot_EEPs`                | Specifies whether to plot **EEP** (Embeded Element Pattern) graphs. **Set it to 0 if EEP plots are not required**. |
 
 ## Output
 - **Normalized EEP values** are stored in `<SAVE_PATH>/e_norms/`
 - **Plots** are saved in `<SAVE_PATH>/plots/`
+
+Below are some example output images:
+
+<p align="center">
+  <img src="eepnn/Problematic_Region_Detector_Files/example_results/100MHz_Ypol_#50_-1.0dB.png" alt="EEPs @100MHz, antenna \#50, Ypol, threshold is -1dB" width="45%">
+  <img src="eepnn/Problematic_Region_Detector_Files/example_results/112.5MHz_Ypol_#2_-1.0dB.png" alt="EEPs @112.5MHz, antenna \#2, Ypol, threshold is -1dB" width="45%">
+</p>
+
+<p align="center">
+  <img src="eepnn/Problematic_Region_Detector_Files/example_results/118.75MHz_Xpol_#2_-1.0dB.png" alt="EEPs @118.75MHz, antenna \#2, Xpol, threshold is -1dB" width="45%">
+  <img src="eepnn/Problematic_Region_Detector_Files/example_results/306.25MHz_Xpol_#1_-3.0dB.png" alt="EEPs @306.25MHz, antenna \#1, Xpol, threshold is -3dB" width="45%">
+</p>
+
+
 - **Detected problematic regions** are recorded in a CSV file inside `<SAVE_PATH>/result/`
 
+Here’s an example of the contents from `problematic_regions-2.0_fov45_1739422068.2191732.csv`:
+
+| threshold | theta_range      | phi_range         | antenna | freq. | pol. | FOV | minimum_dB_in_region | ant_max_power | max_power_coords_in_fov |
+|-----------|-----------------|-------------------|---------|-------|------|-----|----------------------|--------------|-------------------------|
+| -6.0      | [45.0, 45.0]     | [-173.5, -173.0]  | 30      | 100   | X    | 45  | -6.012743428238610   | 0.0          | (30.5, 60.0)            |
+| -6.0      | [34.5, 45.0]     | [-143.0, -131.5]  | 30      | 100   | X    | 45  | -7.133155183420730   | 0.0          | (30.5, 60.0)            |
+| -6.0      | [45.0, 45.0]     | [-54.5, -49.0]    | 30      | 100   | X    | 45  | -6.0789728814864900  | 0.0          | (30.5, 60.0)            |
+| -6.0      | [45.0, 45.0]     | [-27.5, -20.0]    | 30      | 100   | X    | 45  | -6.092158493526420   | 0.0          | (30.5, 60.0)            |
+| -6.0      | [44.5, 45.0]     | [-18.0, -14.0]    | 30      | 100   | X    | 45  | -6.042276455560960   | 0.0          | (30.5, 60.0)            |
+| -6.0      | [36.5, 45.0]     | [-180.0, -162.0]  | 31      | 100   | X    | 45  | -8.021958349762780   | 0.0          | (19.5, -65.5)           |
+ 
+
 ## Example Workflow
-1. **Compute and save `E_Nroms`, plot and save EEPs and output csv file:**
+1. **Compute and save E-norms, plot and save EEPs and output csv file:**
    ```bash
    python3 eepnn/Problematic_Region_Detector_Files/codes/detect.py \
     --fov 30 \
@@ -105,7 +120,7 @@ The program assumes that the input data is a `.mat` file containing the followin
     --compute_enorms 1 \
     --plot_EEPs 1
    ```
-2. **Compute and save `E_Nroms` and output csv file (no plot):**
+2. **Compute and save E-norms and output csv file (no plot):**
    ```bash
      python3 eepnn/Problematic_Region_Detector_Files/codes/detect.py \
     --fov 30 \
@@ -117,7 +132,7 @@ The program assumes that the input data is a `.mat` file containing the followin
     --compute_enorms 1 \
     --plot_EEPs 0
    ```
-3. **Plot and save EEPS + output csv file (not compute `E_Nroms`, only after the first run):**
+3. **Plot and save EEPS + output csv file (not compute E-norms, only after the first run):**
    ```bash
     python3 eepnn/Problematic_Region_Detector_Files/codes/detect.py \
     --fov 30 \
@@ -129,7 +144,7 @@ The program assumes that the input data is a `.mat` file containing the followin
     --compute_enorms 0 \
     --plot_EEPs 1
    ```
-4. **output csv file only (not compute `E_Nroms`, only after the first run):**
+4. **output csv file only (not compute E-norms, only after the first run):**
    ```bash
     python3 eepnn/Problematic_Region_Detector_Files/codes/detect.py \
     --fov 30 \

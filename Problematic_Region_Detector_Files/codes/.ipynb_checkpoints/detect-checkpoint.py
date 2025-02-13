@@ -130,7 +130,7 @@ class EEPProblematicRegionProcessor:
         
         with open(self.output_path_csv, 'w') as f:
             writer = csv.writer(f)
-            writer.writerow(['class','theta_range', 'phi_range', 'antenna', 'freq.', 'pol.', 'FOV',
+            writer.writerow(['threshold','theta_range', 'phi_range', 'antenna', 'freq.', 'pol.', 'FOV',
                              'minimum_dB_in_region', 'ant_max_power', 'max_power_coords_in_fov'])
              
             e_norm_files = [f for f in os.listdir(f"{self.result_path}/e_norms") if f.endswith('enorm.mat')]
