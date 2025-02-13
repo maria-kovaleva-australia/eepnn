@@ -22,25 +22,8 @@ def match_freq_pol(file_name):
         # pol = 0 if pol == 'X' else 1
     return frequency, pol
 
-# def count_e_tot(dim1, dim2, dim3, input_mat_file):
-#     E_total= np.zeros((dim1, dim2, dim3), dtype=float)
-#     E_phi = input_mat_file['Ephi']
-#     E_theta = input_mat_file['Etheta']
-#     E_total= np.sqrt(np.abs(E_phi)**2 + np.abs(E_theta)**2)
-#     return E_total
-
 def count_e_tot(dim1, dim2, dim3, E_phi, E_theta):
     return np.sqrt(np.abs(E_phi)**2 + np.abs(E_theta)**2)
-
-# def count_e_norm(dim1, dim2, dim3,e_tot):
-#     E_total_max_matrix = np.zeros((dim1,dim2, dim3), dtype = float)
-#     E_norm = np.zeros((dim1, dim2, dim3), dtype=float)
-#     for antenna in range(dim3):
-#         E_total_vector_of_antenna = e_tot[:,:,antenna]
-#         e_tot_m = np.max(np.max(E_total_vector_of_antenna))
-#         E_total_max_matrix[:,:,antenna] = e_tot_m
-#     E_norm = 20 * np.log10(e_tot/ E_total_max_matrix)
-#     return E_norm
 
 def count_e_norm(dim1, dim2, dim3, e_tot):
     E_total_max_matrix = np.max(e_tot, axis=(0, 1))  # Max across the first two dimensions (dim1, dim2)
@@ -50,7 +33,8 @@ def count_e_norm(dim1, dim2, dim3, e_tot):
 def detect_shape_of_data(source_files, starstwith='FEKO', ant_start=1, ant_end=256):
     
     files = os.listdir(source_files)
-    mat_files = [file for file in files if file.endswith('.mat') and file.startswith(starstwith)]
+    # mat_files = [file for file in files if file.endswith('.mat') and file.startswith(starstwith)]
+    mat_files = [file for file in files if file.endswith('.mat')]
     data = loadmat(f'{source_files}/{mat_files[0]}', variable_names=['Ephi'])
     dim1, dim2, dim3 = data['Ephi'].shape
     
@@ -69,7 +53,8 @@ def cal_and_save_e_norm(dim1, dim2, dim3, source_files, save_path,starstwith='FE
     os.makedirs(save_path, exist_ok=True)
     enorm_list =[]
     files = os.listdir(source_files)
-    mat_files = [file for file in files if file.endswith('.mat') and file.startswith(starstwith)]
+    # mat_files = [file for file in files if file.endswith('.mat') and file.startswith(starstwith)]
+    mat_files = [file for file in files if file.endswith('.mat')]
     os.makedirs(f'{save_path}/e_norms', exist_ok=True)
     
     for file in tqdm(mat_files, desc="    -. Progress: ", unit="file"):
@@ -92,7 +77,6 @@ def cal_and_save_e_norm(dim1, dim2, dim3, source_files, save_path,starstwith='FE
 
 def process_xpol(antenna_data, theta_range, ant):
     """Processes data for Xpol files."""
-    # Using numpy arrays directly instead of pandas DataFrames
     data_0_180 = antenna_data[:360, :theta_range + 1, ant]  # phi 0-179.5 degrees
     data_180_360 = antenna_data[360:, :theta_range + 1, ant]  # phi 180-360 degrees
     
@@ -101,7 +85,6 @@ def process_xpol(antenna_data, theta_range, ant):
 
 def process_ypol(antenna_data, theta_range, ant):
     """Processes data for Ypol files."""
-    # Using numpy arrays directly instead of pandas DataFrames
     data_0_180 = antenna_data[180:540, :theta_range + 1, ant]  # phi 0-179.5 degrees
     data_180_270 = antenna_data[540:, :theta_range + 1, ant]  # phi 180-270 degrees
     data_270_360 = antenna_data[0:180, :theta_range + 1, ant]  # phi 270-360 degrees
@@ -109,7 +92,6 @@ def process_ypol(antenna_data, theta_range, ant):
     # Concatenate and reorder the arrays for proper contour plot representation
     data_180_360 = np.concatenate((data_180_270, data_270_360), axis=0)
     return np.concatenate((data_180_360, data_0_180), axis=0)
-
 
 def process_e_norm(e_norm_path, e_norm_filename, fov, ant_start=1, ant_end=256):
     """
@@ -316,7 +298,6 @@ def get_minimum_power_dB(file, problematic_file):
 
         temp_dbi = []
         temp_theta = []
-        # print(len(problematic_file))
         for k in range(len(problematic_file)):
             if problematic_file[k][0] in range(phi[0],phi[1]+1):
                 temp_theta.append(problematic_file[k][1])
@@ -334,7 +315,6 @@ def plot_2d_eep(filename, fov, output_path=None, enorm_path= None, problematic_t
     freq, pol = match_freq_pol(filename)
     
     ant_num = e_norm.shape[2]
-    # print(f"shape of enorm, {e_norm.shape}, total antenna number is {ant_num}")
     for antenna in range(ant_num):
         if filename.endswith('Xpol_enorm.mat'):
             arr=process_xpol(e_norm, theta_range,antenna)
@@ -343,7 +323,6 @@ def plot_2d_eep(filename, fov, output_path=None, enorm_path= None, problematic_t
 
         locat = np.unravel_index(np.argmax(arr), arr.shape)
         plt.scatter(locat[1]/2, (locat[0] / 2)-180, c="gray", marker='+', s=80, linewidths=1.5)
-        # print((locat[0] / 2)-180,locat[1]/2 )
         plt.imshow(arr, aspect = 'auto', extent=[0,90,-180,180], alpha = 1, origin = "lower", cmap= 'viridis')
         plt.colorbar()
         
@@ -360,11 +339,8 @@ def plot_2d_eep(filename, fov, output_path=None, enorm_path= None, problematic_t
         plt.close()
 
 
-
 def get_kx_ky(FEKO_data_path):
-    # all_mat= os.listdir(FEKO_data_path)
     all_mat = [file for file in os.listdir(FEKO_data_path) if file.endswith('.mat')]
-    # Load the .mat file once
     data = loadmat(f"{FEKO_data_path}/{all_mat[0]}", variable_names=['kx', 'ky'])
     return data['kx'], data['ky'] 
 
