@@ -91,26 +91,11 @@ The program assumes that the input data is a `.mat` file containing the followin
 
   Below are some example output images, where the cross marks the maximum power location. Regions with power above the problematic threshold are shown in white, while all other areas follow the colorbar scale.
 
-<p align="center">
-    <img src="eepnn/Problematic_Region_Detector_Files/example_results/100MHz_Ypol_#50_-1.0dB.png" 
-         alt="EEPs @100MHz, antenna #50, Ypol, threshold is -1dB" width="45%">
-</p>
-
-<p align="center">
-    <img src="eepnn/Problematic_Region_Detector_Files/example_results/112.5MHz_Ypol_#2_-1.0dB.png" 
-         alt="EEPs @112.5MHz, antenna #2, Ypol, threshold is -1dB" width="45%">
-</p>
-
-<p align="center">
-    <img src="eepnn/Problematic_Region_Detector_Files/example_results/118.75MHz_Xpol_#2_-1.0dB.png" 
-         alt="EEPs @118.75MHz, antenna #2, Xpol, threshold is -1dB" width="45%">
-</p>
-
-<p align="center">
-    <img src="eepnn/Problematic_Region_Detector_Files/example_results/306.25MHz_Xpol_#1_-3.0dB.png" 
-         alt="EEPs @306.25MHz, antenna #1, Xpol, threshold is -3dB" width="45%">
-</p>
-
+  ![EEPs @100MHz, antenna #50, Ypol, threshold is -1dB.](/eepnn/Problematic_Region_Detector_Files/example_results/100MHz_Ypol_#50_-1.0dB.png)
+  ![EEPs @112.5MHz, antenna #2, Ypol, threshold is -1dB.](/eepnn/Problematic_Region_Detector_Files/example_results/112.5MHz_Ypol_#2_-1.0dB.png)
+  ![EEPs @118.75MHz, antenna #2, Xpol, threshold is -1dB.](/eepnn/Problematic_Region_Detector_Files/example_results/118.75MHz_Xpol_#2_-1.0dB.png)
+  ![EEPs @306.25MHz, antenna #1, Xpol, threshold is -3dB.](/eepnn/Problematic_Region_Detector_Files/example_results/306.25MHz_Xpol_#1_-3.0dB.png)
+  
 - **Detected Problematic Regions** are recorded in a CSV file located at `<SAVE_PATH>/result/`.
 
   Here is the column descriptions for the CSV file:
