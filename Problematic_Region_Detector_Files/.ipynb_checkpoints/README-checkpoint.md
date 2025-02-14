@@ -72,7 +72,7 @@ python3 eepnn/Problematic_Region_Detector_Files/codes/detect.py \
 - The first time you run the program for the same batch of data, you **must** set `--compute_enorms 1`, as plotting and problematic region detection rely on the computed E-norms.
 - If you're processing multiple regions of interest, set `--compute_enorms 0` after the initial run to prevent repeated E-norm calculations.
 
-Running the Demo Notebook:
+### Running the Demo Notebook:
 
 In addition to the detection script, you can run the `demo.ipynb` notebook to for immediate useage.
 
@@ -91,19 +91,25 @@ The program assumes that the input data is a `.mat` file containing the followin
 
   Below are some example output images, where the cross marks the maximum power location. Regions with power above the problematic threshold are shown in white, while all other areas follow the colorbar scale.
 
-  <p align="center">
+<p align="center">
     <img src="eepnn/Problematic_Region_Detector_Files/example_results/100MHz_Ypol_#50_-1.0dB.png" 
-         alt="EEPs @100MHz, antenna \#50, Ypol, threshold is -1dB" width="45%">
-    <img src="eepnn/Problematic_Region_Detector_Files/example_results/112.5MHz_Ypol_#2_-1.0dB.png" 
-         alt="EEPs @112.5MHz, antenna \#2, Ypol, threshold is -1dB" width="45%">
-  </p>
+         alt="EEPs @100MHz, antenna #50, Ypol, threshold is -1dB" width="45%">
+</p>
 
-  <p align="center">
+<p align="center">
+    <img src="eepnn/Problematic_Region_Detector_Files/example_results/112.5MHz_Ypol_#2_-1.0dB.png" 
+         alt="EEPs @112.5MHz, antenna #2, Ypol, threshold is -1dB" width="45%">
+</p>
+
+<p align="center">
     <img src="eepnn/Problematic_Region_Detector_Files/example_results/118.75MHz_Xpol_#2_-1.0dB.png" 
-         alt="EEPs @118.75MHz, antenna \#2, Xpol, threshold is -1dB" width="45%">
+         alt="EEPs @118.75MHz, antenna #2, Xpol, threshold is -1dB" width="45%">
+</p>
+
+<p align="center">
     <img src="eepnn/Problematic_Region_Detector_Files/example_results/306.25MHz_Xpol_#1_-3.0dB.png" 
-         alt="EEPs @306.25MHz, antenna \#1, Xpol, threshold is -3dB" width="45%">
-  </p>
+         alt="EEPs @306.25MHz, antenna #1, Xpol, threshold is -3dB" width="45%">
+</p>
 
 - **Detected Problematic Regions** are recorded in a CSV file located at `<SAVE_PATH>/result/`.
 
