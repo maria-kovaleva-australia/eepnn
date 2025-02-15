@@ -31,7 +31,6 @@ eepnn/
 ### Clone the Repository
 ```bash
 git clone https://github.com/maria-kovaleva-australia/eepnn.git
-cd eepnn && git checkout dev3
 ```
 
 ### Install Dependencies
